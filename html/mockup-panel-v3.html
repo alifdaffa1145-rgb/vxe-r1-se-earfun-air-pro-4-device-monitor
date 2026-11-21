@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup v3 — Dua Tab: Mouse &amp; TWS</title>
+<style>
+  :root{
+    --bg:#0d1016; --card:#171b24; --card2:#1d2330; --line:#2a3242;
+    --fg:#e8edf6; --muted:#8d99ad; --accent:#6aa6ff; --accent2:#a78bfa;
+    --green:#36d399; --amber:#fbbf24; --red:#f87171;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;padding:18px 16px 30px;background:var(--bg);color:var(--fg);
+    font-family:var(--app-font,"Segoe UI",system-ui,sans-serif);font-size:14px;width:100%}
+  .wrap{width:100%;max-width:980px}
+  .top{display:flex;flex-wrap:wrap;gap:8px;align-items:baseline;margin-bottom:12px}
+  .top h1{font-size:18px;margin:0;font-weight:650}
+  .top .sub{color:var(--muted);font-size:12px}
+  .badge{background:#243049;color:var(--accent);border:1px solid #31446b;
+    padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700}
+  .legend{display:flex;flex-wrap:wrap;gap:6px 12px;margin-bottom:14px;font-size:10.5px;color:var(--muted)}
+  .legend span{display:inline-flex;align-items:center;gap:5px}
+  .ld{width:7px;height:7px;border-radius:50%;display:inline-block}
+
+  .maintabs{display:flex;gap:8px;margin-bottom:0}
+  .maintabs button{flex:1;background:#141a25;color:var(--muted);border:1px solid var(--line);
+    border-bottom:0;border-radius:12px 12px 0 0;padding:12px;font-size:14px;font-weight:700;
+    cursor:pointer;font-family:inherit;transition:.15s}
+  .maintabs button.on{background:var(--card);color:var(--fg);border-color:var(--accent);
+    box-shadow:inset 0 3px 0 var(--accent)}
+  .maintabs button .small{display:block;font-size:10.5px;font-weight:400;color:var(--muted);margin-top:3px}
+  .mainpane{display:none}
+  .mainpane.on{display:block}
+
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:0 0 16px 16px;
+    overflow:hidden;box-shadow:0 18px 50px #0008}
+  .ph{display:flex;align-items:center;gap:10px;padding:10px 16px;background:#1c2331;border-bottom:1px solid var(--line)}
+  .ph .title{font-weight:700;font-size:13px}
+  .ph .key{font-size:10px;color:var(--muted);background:#222a39;border:1px solid var(--line);border-radius:6px;padding:2px 7px}
+  .ph .clock{margin-left:auto;color:var(--muted);font-size:11px}
+  .pb{padding:14px 16px 16px}
+
+  .card{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:13px 14px;margin-bottom:12px}
+  .lab{font-size:10.5px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);font-weight:700}
+  .big{display:flex;align-items:baseline;gap:8px;margin-top:4px;flex-wrap:wrap}
+  .big .n{font-size:34px;font-weight:750;line-height:1}
+  .big .u{font-size:14px;color:var(--muted)}
+  .chip{font-size:10px;padding:2px 7px;border-radius:999px;font-weight:700;white-space:nowrap}
+  .g{background:#36d39922;color:var(--green)} .a{background:#fbbf2422;color:var(--amber)}
+  .r{background:#f8717122;color:var(--red)} .b{background:#6aa6ff22;color:var(--accent)}
+  .p{background:#a78bfa22;color:#c4b5fd} .n{background:#8d99ad22;color:var(--muted)}
+  .track{height:7px;border-radius:99px;background:#0d1119;margin-top:10px;overflow:hidden}
+  .fill{height:100%;border-radius:99px;background:var(--green)}
+  .meta{color:var(--muted);font-size:11.5px;margin-top:9px}
+  .row{display:flex;align-items:center;gap:9px;margin-top:9px}
+  .row .nm{width:64px;font-size:12px;color:var(--muted)}
+  .row .track{flex:1;margin:0;height:6px}
+  .row .pc{width:34px;text-align:right;font-size:12px}
+
+  .tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+  .tabs button{background:#1b2130;color:var(--muted);border:1px solid var(--line);
+    border-radius:8px 8px 0 0;padding:7px 12px;font-size:11.5px;cursor:pointer;font-family:inherit}
+  .tabs button.on{background:var(--card2);color:var(--fg);border-bottom-color:var(--card2);font-weight:700}
+  .tabpane{display:none;background:var(--card2);border:1px solid var(--line);border-radius:0 10px 10px 10px;padding:13px 14px}
+  .tabpane.on{display:block}
+  .block{margin-bottom:14px}.block:last-child{margin-bottom:0}
+
+  .seg{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+  .seg button,.mini,.apply{background:#222b3a;color:var(--fg);border:1px solid var(--line);
+    border-radius:8px;padding:6px 11px;font-size:11.5px;cursor:pointer;font-family:inherit}
+  .seg button.on{background:var(--accent);color:#07101f;border-color:var(--accent);font-weight:700}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+  .chips button{background:#1b2130;color:var(--muted);border:1px solid var(--line);
+    border-radius:999px;padding:5px 10px;font-size:11px;cursor:pointer;font-family:inherit}
+  .chips button.on{background:#2b3a5c;color:var(--accent);border-color:#4466a0}
+  .togs{display:flex;flex-wrap:wrap;gap:14px;margin-top:10px}
+  .tog{display:flex;align-items:center;gap:7px;cursor:pointer;font-size:11.5px}
+  .sw{width:32px;height:18px;border-radius:99px;background:#39435a;position:relative}
+  .sw:after{content:"";position:absolute;top:3px;left:3px;width:12px;height:12px;border-radius:50%;background:#cbd5e1}
+  .tog.on .sw{background:var(--accent)}.tog.on .sw:after{left:17px;background:#fff}
+
+  table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:8px}
+  th{text-align:left;color:var(--muted);font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.5px;
+    padding:6px 8px;border-bottom:1px solid var(--line)}
+  td{padding:7px 8px;border-bottom:1px solid #232b39;vertical-align:top}
+  tr:last-child td{border-bottom:0}
+  td code{background:#0e131d;border:1px solid #232c3c;border-radius:4px;padding:1px 5px;color:#a5d0ff;font-size:10.5px}
+  .warn{border:1px solid #7c4a1e;background:#2b1d12;border-radius:10px;padding:10px 12px;color:#fcd9a8;font-size:11.5px;margin-bottom:12px}
+  .warn b{color:var(--amber)}
+  .okbox{border:1px solid #1d6b4f;background:#10271f;border-radius:10px;padding:10px 12px;color:#a7f3d0;font-size:11.5px;margin-bottom:12px}
+  .note{color:var(--muted);font-size:11px;margin-top:8px}
+
+  .bands{display:grid;grid-template-columns:repeat(auto-fit,minmax(56px,1fr));gap:8px;margin-top:12px}
+  .band{background:#121722;border:1px solid #232c3c;border-radius:9px;padding:8px 5px;text-align:center}
+  .band input[type=range]{width:100%;height:78px;writing-mode:vertical-lr;direction:rtl;accent-color:var(--accent2);cursor:pointer}
+  .band .f{font-size:10px;color:var(--muted)}.band .v{font-size:10.5px;color:#d8ccff;font-weight:650}
+  .eqhead{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+  .preset{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}
+  .preset button{padding:5px 10px;font-size:11px;background:#222b3a;color:var(--fg);border:1px solid var(--line);border-radius:8px;cursor:pointer;font-family:inherit}
+  .preset button.on{background:#3b3159;border-color:var(--accent2);color:#d8ccff}
+  .dpistages{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-top:9px}
+  .dpi{background:#121722;border:1px solid #232c3c;border-radius:9px;padding:9px;text-align:center}
+  .dpi .vc{width:10px;height:10px;border-radius:50%;margin:0 auto 5px}
+  .dpi .val{font-size:17px;font-weight:750}.dpi .lbl{font-size:10px;color:var(--muted)}
+  .pf{display:flex;align-items:center;justify-content:center;height:0;overflow:hidden;opacity:0;transition:.2s;color:var(--green);font-size:12px}
+  .pf.show{height:24px;opacity:1}
+  .foot{border-top:1px solid var(--line);padding:10px 16px;display:flex;flex-wrap:wrap;gap:8px 16px;color:var(--muted);font-size:11px}
+  .finalnote{margin-top:14px;color:var(--muted);font-size:11.5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="top">
+    <h1>Panel Perangkat</h1>
+    <span class="badge">MOCKUP v3</span>
+    <span class="sub">2 tab utama · Mouse VXE R1 SE+ / TWS EarFun Air Pro 4</span>
+  </div>
+  <div class="legend">
+    <span><i class="ld" style="background:var(--green)"></i> Terbukti + readback</span>
+    <span><i class="ld" style="background:var(--accent)"></i> Bisa dibaca</span>
+    <span><i class="ld" style="background:var(--accent2)"></i> Perlu uji</span>
+    <span><i class="ld" style="background:var(--amber)"></i> Berisiko reboot</span>
+    <span><i class="ld" style="background:#46536a"></i> Tidak bisa</span>
+  </div>
+
+  <div class="maintabs">
+    <button class="on" data-main="mouse">MOUSE · VXE R1 SE+<span class="small">Baterai 100% · dongle 2.4G</span></button>
+    <button data-main="tws">TWS · EARFUN AIR PRO 4<span class="small">Kiri 30% · kanan 40% · ANC</span></button>
+  </div>
+
+  <!-- =================== MOUSE =================== -->
+  <div class="mainpane on" id="main-mouse">
+    <div class="panel">
+      <div class="ph"><span class="title">Mouse · VXE R1 SE+</span><span class="key">0xFF02 · 3554:F58E</span><span class="clock">21 Nov 2026 · 19:30</span></div>
+      <div class="pb">
+        <div class="card">
+          <div class="lab">Baterai</div>
+          <div class="big"><span class="n">100</span><span class="u">%</span><span class="chip g">TERUJI · CHECKSUM OK</span></div>
+          <div class="track"><div class="fill" style="width:100%"></div></div>
+          <div class="meta">4299 mV &nbsp;·&nbsp; frame <code>08 04 … 08</code> &nbsp;·&nbsp; tidak sedang mengisi</div>
+        </div>
+        <div class="tabs" data-group="ms">
+          <button class="on" data-t="ms1">Performa</button>
+          <button data-t="ms2">Tombol &amp; Profil</button>
+          <button data-t="ms3">Spesifikasi</button>
+        </div>
+        <div class="tabpane on" id="ms1">
+          <div class="okbox"><b>TELAH TERBUKTI END-TO-END:</b> 10 register dibaca dengan checksum <code>0x55</code> valid. Tulis live-setting dibuktikan: debounce <code>9 → readback 02 09 00 4A</code>, lalu <code>8 → readback 02 08 00 4B</code>, dikembalikan ke 8. LOD selector <code>03</code> juga terbaca <code>03 01 00 51</code>.</div>
+          <div class="block">
+            <div class="lab">DPI stage <code>000c</code> <span class="chip b">4 stage</span></div>
+            <div class="dpistages">
+              <div class="dpi"><div class="vc" style="background:#ef4444"></div><div class="val">400</div><div class="lbl">Stage 1 · merah</div></div>
+              <div class="dpi"><div class="vc" style="background:#22c55e"></div><div class="val">800</div><div class="lbl">Stage 2 · hijau</div></div>
+              <div class="dpi"><div class="vc" style="background:#3b82f6"></div><div class="val">1600</div><div class="lbl">Stage 3 · biru</div></div>
+              <div class="dpi"><div class="vc" style="background:#a855f7"></div><div class="val">3200</div><div class="lbl">Stage 4 · ungu</div></div>
+            </div>
+            <div class="note">Stage 1–2 terbaca sebagai 400 / 800 DPI dari register <code>000c</code> (group <code>09 09 00 43</code>, <code>12 12 00 31</code>), cocok dengan manual.</div>
+          </div>
+          <table>
+            <tr><th>Pengaturan</th><th>Nilai terbaca</th><th>Register</th><th>Status</th></tr>
+            <tr><td>Polling rate</td><td>1000 Hz (pair <code>01 54</code>)</td><td><code>0000</code></td><td><span class="chip g">terbaca</span></td></tr>
+            <tr><td>Jumlah stage DPI</td><td>4 (pair <code>04 51</code>)</td><td><code>0000</code></td><td><span class="chip g">terbaca</span></td></tr>
+            <tr><td>LOD</td><td>1 mm (group <code>03 01 00 51</code>)</td><td><code>000a</code> / <code>0070</code></td><td><span class="chip g">baca + tulis</span></td></tr>
+            <tr><td>Debounce</td><td>8 ms</td><td><code>0070</code> sel <code>02</code> / <code>00a9</code></td><td><span class="chip g">end-to-end</span></td></tr>
+            <tr><td>Motion sync</td><td>ON</td><td><code>00a9</code></td><td><span class="chip g">terbaca</span></td></tr>
+            <tr><td>Angle snapping</td><td>off</td><td><code>00bd</code></td><td><span class="chip g">terbaca</span></td></tr>
+            <tr><td>Sleep timer</td><td>60 dtk</td><td><code>00a9</code></td><td><span class="chip g">terbaca</span></td></tr>
+            <tr><td>LED DPI</td><td>off</td><td><code>002c</code> / <code>004c</code></td><td><span class="chip g">terbaca</span></td></tr>
+          </table>
+        </div>
+        <div class="tabpane" id="ms2">
+          <table>
+            <tr><th>Fitur</th><th>Nilai / opsi</th><th>Cara</th><th>Status</th></tr>
+            <tr><td>Remap tombol</td><td>disabled, mouse, dpi, shortcut, macro, reportRate, lighting, profile, dpiLock, wheel</td><td>EEPROM <code>0060–0074</code></td><td><span class="chip p">source-derived</span></td></tr>
+            <tr><td>Jumlah tombol</td><td>6 record (manual: 5)</td><td>EEPROM</td><td><span class="chip a">konflik</span></td></tr>
+            <tr><td>Makro</td><td>12 slot × 384 byte</td><td><code>0300</code></td><td><span class="chip p">source-derived</span></td></tr>
+            <tr><td>Profil onboard</td><td>4 bank</td><td>COMPX <code>0a/0e/0f</code></td><td><span class="chip p">source-derived</span></td></tr>
+            <tr><td>RGB</td><td>tidak ada</td><td>—</td><td><span class="chip n">tidak ada</span></td></tr>
+            <tr><td>Firmware update</td><td>terenkripsi</td><td>bootloader <code>FFB1/FFB3</code></td><td><span class="chip n">tidak diuji</span></td></tr>
+          </table>
+        </div>
+        <div class="tabpane" id="ms3">
+          <table>
+            <tr><th>Spesifikasi</th><th>Nilai</th><th>Status</th></tr>
+            <tr><td>Sensor</td><td>PixArt PAW3395 SE</td><td><span class="chip g">fakta</span></td></tr>
+            <tr><td>DPI</td><td>klaim 10–18000; grid nyata 200–18000</td><td><span class="chip a">konflik</span></td></tr>
+            <tr><td>Kecepatan</td><td>400 IPS / 40 G</td><td><span class="chip g">fakta</span></td></tr>
+            <tr><td>Switch</td><td>Huano Blue Glow V2</td><td><span class="chip g">fakta</span></td></tr>
+            <tr><td>Latensi klik</td><td>1,19 ms kabel / 1,95 ms wireless</td><td><span class="chip p">pihak ke-3</span></td></tr>
+            <tr><td>Berat</td><td>klaim 55 g / timbangan 58,1 g</td><td><span class="chip a">konflik</span></td></tr>
+            <tr><td>Baterai</td><td>520 mAh · klaim 70–75 jam</td><td><span class="chip g">fakta+klaim</span></td></tr>
+            <tr><td>Konektivitas</td><td>2.4G / BT 5.4 / USB-C</td><td><span class="chip g">fakta</span></td></tr>
+          </table>
+        </div>
+      </div>
+      <div class="foot"><span>Baterai + 10 register + tulis debounce terbukti · nilai uji dikembalikan · frame checksum 0x55 valid</span></div>
+    </div>
+  </div>
+
+  <!-- =================== TWS =================== -->
+  <div class="mainpane" id="main-tws">
+    <div class="panel">
+      <div class="ph"><span class="title">TWS · EarFun Air Pro 4</span><span class="key">GAIA · COM3 · TW600</span><span class="clock">21 Nov 2026 · 19:30</span></div>
+      <div class="pb">
+        <div class="card">
+          <div class="lab">Baterai</div>
+          <div class="big"><span style="font-size:20px;font-weight:700">Kiri 30% · Kanan 40%</span><span class="chip g">TERUJI</span></div>
+          <div class="row"><span class="nm">Kiri</span><div class="track"><div class="fill" style="width:30%;background:var(--amber)"></div></div><span class="pc">30%</span></div>
+          <div class="row"><span class="nm">Kanan</span><div class="track"><div class="fill" style="width:40%"></div></div><span class="pc">40%</span></div>
+          <div class="row"><span class="nm">Case</span><div class="track"><div class="fill" style="width:0%"></div></div><span class="pc">—</span></div>
+          <div class="meta">Firmware v0.4.1 &nbsp;·&nbsp; <code>0xFF</code> = case tidak terbaca</div>
+        </div>
+        <div class="tabs" data-group="ef">
+          <button class="on" data-t="ef1">Mode &amp; Suara</button>
+          <button data-t="ef2">Konektivitas</button>
+          <button data-t="ef3">Tombol &amp; Gestur</button>
+          <button data-t="ef4">EQ 10 Band</button>
+        </div>
+        <div class="tabpane on" id="ef1">
+          <div class="okbox"><b>TELAH DIBUKTIKAN END-TO-END:</b> noise master, sub-mode ANC, sub-mode Ambient, game mode, in-ear detection, touch lock — ditulis, dibaca balik, lalu dikembalikan ke nilai awal.</div>
+          <div class="block">
+            <div class="lab">Noise control master <code>0315</code>/<code>0314</code> <span class="chip g">1→2→1 OK</span></div>
+            <div class="seg" data-group="master"><button data-v="0">Normal</button><button class="on" data-v="1">ANC</button><button data-v="2">Ambient</button></div>
+          </div>
+          <div class="block">
+            <div class="lab">Sub-mode ANC <code>033B</code>/<code>033A</code> <span class="chip g">3→2→3 OK</span></div>
+            <div class="chips" data-group="anc">
+              <button data-v="0">AI Ear Adaptive</button><button data-v="1">Wind Noise</button>
+              <button data-v="2">Strong ANC</button><button class="on" data-v="3">Balanced ANC</button>
+              <button data-v="4">AI Environment</button>
+            </div>
+          </div>
+          <div class="block">
+            <div class="lab">Sub-mode Ambient <code>033D</code>/<code>033C</code> <span class="chip g">1→0→1 OK</span></div>
+            <div class="chips" data-group="amb"><button class="on" data-v="0">Default</button><button data-v="1">Natural</button></div>
+          </div>
+          <div class="block">
+            <div class="tabpane" style="display:block;border:0;padding:0;background:transparent">
+              <div class="togs">
+                <div class="tog" data-tog="game"><span class="sw"></span> Game mode <span class="chip g">0→1→0 OK</span></div>
+                <div class="tog on" data-tog="inear"><span class="sw"></span> In-ear detection <span class="chip g">0→1→0 OK</span></div>
+                <div class="tog" data-tog="touch"><span class="sw"></span> Gestur sentuh <span class="chip a">MATI / terkunci (1)</span></div>
+              </div>
+            </div>
+          <div class="block">
+            <div class="lab">Gestur sentuh · nyala / mati <code>0334</code> / <code>0335</code></div>
+            <div class="seg" data-group="gestureSwitch">
+              <button data-v="0">Nyalakan gestur</button>
+              <button class="on" data-v="1">Matikan gestur</button>
+            </div>
+            <div class="note">Status saat ini <b>mati/terkunci</b> (nilai 1). Terbukti: write 0 → read 0 (aktif), write 1 → read 1 (mati), dikembalikan ke 1.</div>
+          </div>
+          <table>
+              <tr><th>Item</th><th>Nilai</th><th>Cmd</th><th>Status</th></tr>
+              <tr><td>Mode audio aktif</td><td><code>0x03</code> keluarga aptX</td><td><code>034D</code></td><td><span class="chip b">baca</span></td></tr>
+              <tr><td>Volume prompt</td><td>0</td><td><code>0339</code>/<code>0338</code></td><td><span class="chip g">stabil (6x)</span></td></tr>
+              <tr><td>Auto power-off</td><td>tidak merespons</td><td><code>0348</code></td><td><span class="chip n">tidak ada di TW600</span></td></tr>
+            </table>
+          </div>
+        </div>
+        <div class="tabpane" id="ef2">
+          <div class="warn"><b>KONFLIK CODEC TERATASI TANPA MENULIS:</b> nilai aktif <code>0x13</code> cocok sebagai <i>index 19 = aptX Adaptive Lossless</i>, bukan bitmask. Status audio <code>0x034D = 3</code> (keluarga aptX) mendukung interpretasi ini. Menulis codec masih belum diuji karena memicu reboot.</div>
+          <div class="block">
+            <div class="lab">Codec audio <code>032F</code> / <code>032E</code></div>
+            <div class="chips" data-group="codec">
+              <button data-v="0">Stable</button><button data-v="1">aptX</button>
+              <button data-v="3">aptX Adaptive</button><button data-v="8">LDAC</button>
+              <button class="on" data-v="19">Lossless 0x13</button>
+            </div>
+          </div>
+          <table>
+            <tr><th>Fitur</th><th>Nilai</th><th>Cmd</th><th>Status</th></tr>
+            <tr><td>Multipoint</td><td>0 = off</td><td><code>0326</code>/<code>0327</code></td><td><span class="chip a">butuh reboot</span></td></tr>
+            <tr><td>Mode mikrofon</td><td>0 = auto</td><td><code>0331</code>/<code>0330</code></td><td><span class="chip g">0/1/2 terbukti</span></td></tr>
+            <tr><td>Cari earbud</td><td>0 = mati</td><td><code>0333</code>/<code>0332</code></td><td><span class="chip n">tidak diuji (suara keras)</span></td></tr>
+            <tr><td>Perangkat terpasang</td><td>tersedia</td><td><code>032C</code></td><td><span class="chip p">source-derived</span></td></tr>
+            <tr><td>Firmware OTA</td><td>kanal 7034</td><td>—</td><td><span class="chip n">tidak bisa</span></td></tr>
+            <tr><td>Factory reset</td><td>—</td><td><code>0036</code></td><td><span class="chip n">dilarang</span></td></tr>
+          </table>
+        </div>
+        <div class="tabpane" id="ef3">
+          <div class="block">
+            <div class="lab">Kunci sentuh <code>0335</code>/<code>0334</code> <span class="chip g">0/1 terkonfirmasi</span></div>
+            <div class="note"><b>0 = gestur aktif, 1 = gestur mati/terkunci.</b> Status saat ini 1 (mati). Konflik peta bitmask 0/1/2/3 terselesaikan: write 0 → read 0, write 1 → read 1. Toggle nyala/mati juga tersedia di tab Mode &amp; Suara.</div>
+          </div>
+          <table>
+            <tr><th>Gestur</th><th>Kiri</th><th>Kanan</th></tr>
+            <tr><td>Single tap <code>01</code></td><td>Volume down (3)</td><td>Volume up (2)</td></tr>
+            <tr><td>Double tap <code>02</code></td><td>Play/pause (1)</td><td>Play/pause (1)</td></tr>
+            <tr><td>Triple tap <code>03</code></td><td>Previous (4)</td><td>Next (5)</td></tr>
+            <tr><td>Long press <code>11</code></td><td>Noise toggle (8)</td><td>Voice assistant (6)</td></tr>
+          </table>
+          <div class="note">Terkonfirmasi: respons <code>030B</code> 33 byte = 16 pasangan <code>[jenis, aksi]</code>. Write kanan-single <code>2→16→2</code> readback cocok.</div>
+        </div>
+        <div class="tabpane" id="ef4">
+          <div class="okbox"><b>KONFLIK EQ TERKONFIRMASI:</b> query <code>0E02</code> dijawab <code>8E02 01</code> = NOT_SUPPORTED. Firmware tidak menyimpan kurva; preset hanya disimpan lokal dan ditulis lewat <code>0E01</code> (10 band, ±6 dB).</div>
+          <div class="eqhead">
+            <div class="lab">EQ 10 band · write-only</div>
+            <div class="preset" data-group="eqp">
+              <button class="on" data-p="netral">Netral</button><button data-p="bass">Bass</button>
+              <button data-p="vokal">Vokal</button><button data-p="adat">Custom</button>
+            </div>
+          </div>
+          <div class="bands" id="bands"></div>
+          <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:12px;color:var(--muted);font-size:11px">
+            <span>Konflik encoding gain masih terbuka: <code>val*36</code> vs <code>gain*60</code>. Tidak diuji agar EQ kamu tidak berubah.</span>
+            <button class="apply" id="applyEq" style="margin-left:auto">Terapkan</button>
+          </div>
+          <div class="pf" id="pf">✓ 10 band ditulis · preset aktif disimpan lokal</div>
+        </div>
+      </div>
+      <div class="foot"><span>Semua nilai uji dikembalikan: noise 1 · ANC 3 · Ambient 1 · game 0 · in-ear 0 · touch 1 · mic 0</span></div>
+    </div>
+  </div>
+
+  <div class="finalnote"><b>Catatan:</b> mockup desain, bukan aplikasi. Rincikan bukti dan sumber: <b>docs/FITUR-LENGKAP.md</b>, skrip uji: <b>scripts/verify_earfun.py</b>, <b>verify_earfun2.py</b>, <b>verify_mouse.py</b>.</div>
+</div>
+
+<script>
+(function(){
+  document.querySelectorAll('.maintabs button').forEach(b=>b.addEventListener('click',()=>{
+    document.querySelectorAll('.maintabs button').forEach(x=>x.classList.remove('on'));
+    document.querySelectorAll('.mainpane').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');
+    document.getElementById('main-'+b.dataset.main).classList.add('on');
+  }));
+  document.querySelectorAll('.tabs').forEach(bar=>{
+    bar.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{
+      bar.querySelectorAll('button').forEach(x=>x.classList.remove('on'));
+      b.classList.add('on');
+      const pane=document.getElementById(b.dataset.t);
+      if(pane) pane.classList.add('on');
+      // sembunyikan pane lain dalam grup tab yang sama
+      const parent=bar.parentElement;
+      parent.querySelectorAll(':scope > .tabpane').forEach(p=>{
+        if(p.id!==b.dataset.t) p.classList.remove('on');
+      });
+    }));
+  });
+  document.querySelectorAll('.seg[data-group], .chips[data-group]').forEach(g=>{
+    g.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{
+      g.querySelectorAll('button').forEach(x=>x.classList.remove('on'));
+      b.classList.add('on');
+    }));
+  });
+  document.querySelectorAll('.tog').forEach(t=>t.addEventListener('click',()=>t.classList.toggle('on')));
+
+  // innerHTML hanya memakai string statis dari array freqs, bukan input pengguna.
+  const freqs=['31.5','63','125','250','500','1k','2k','4k','8k','16k'];
+  const presets={netral:[0,0,0,0,0,0,0,0,0,0],bass:[8,7,5,3,1,0,0,0,0,0],vokal:[0,1,2,4,6,5,3,2,1,0]};
+  const bands=document.getElementById('bands');
+  let values=presets.netral.slice();
+  values.forEach((v,i)=>{
+    const d=document.createElement('div');d.className='band';
+    d.innerHTML='<div class="f">'+freqs[i]+'</div><input type="range" min="-10" max="10" value="'+v+'" data-i="'+i+'"><div class="v" data-v="'+i+'"></div>';
+    bands.appendChild(d);
+  });
+  function paint(){
+    document.querySelectorAll('#bands input[type=range]').forEach(s=>{
+      const v=+s.value;
+      s.closest('.band').querySelector('.v').textContent=(v>0?'+':'')+v+' dB';
+    });
+  }
+  document.querySelectorAll('#bands input[type=range]').forEach(s=>s.addEventListener('input',()=>{
+    values[+s.dataset.i]=+s.value;
+    document.querySelectorAll('[data-group=eqp] button').forEach(b=>b.classList.remove('on'));
+    document.querySelector('[data-group=eqp] button[data-p=adat]').classList.add('on');
+    paint();
+  }));
+  document.querySelectorAll('[data-group=eqp] button').forEach(b=>b.addEventListener('click',()=>{
+    const p=b.dataset.p;if(p==='adat')return;
+    values=presets[p].slice();
+    document.querySelectorAll('#bands input[type=range]').forEach((s,i)=>s.value=values[i]);
+    document.querySelectorAll('[data-group=eqp] button').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');paint();
+  }));
+  document.getElementById('applyEq').addEventListener('click',()=>{
+    const pf=document.getElementById('pf');pf.classList.add('show');
+    setTimeout(()=>pf.classList.remove('show'),2600);
+  });
+  paint();
+})();
+</script>
+</body>
+</html>

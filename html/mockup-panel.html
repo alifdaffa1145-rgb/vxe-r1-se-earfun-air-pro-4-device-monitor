@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup — Panel Perangkat</title>
+<style>
+  :root{
+    --bg:#0d1016; --card:#171b24; --card2:#1d2330; --line:#2a3242;
+    --fg:#e8edf6; --muted:#8d99ad; --accent:#6aa6ff; --accent2:#a78bfa;
+    --green:#36d399; --amber:#fbbf24; --red:#f87171;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; padding:18px 16px 28px; background:var(--bg); color:var(--fg);
+    font-family:var(--app-font,"Segoe UI",system-ui,-apple-system,sans-serif);
+    font-size:14px; line-height:1.45; width:100%;
+  }
+  .wrap{width:100%; max-width:980px}
+  .top{display:flex; flex-wrap:wrap; gap:8px; align-items:baseline; margin-bottom:16px}
+  .top h1{font-size:18px; margin:0; font-weight:650; letter-spacing:.2px}
+  .top .sub{color:var(--muted); font-size:12px}
+  .badge{background:#243049; color:var(--accent); border:1px solid #31446b;
+    padding:2px 8px; border-radius:999px; font-size:11px; font-weight:600}
+
+  .access{display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:10px; margin-bottom:18px}
+  .acc{background:var(--card); border:1px solid var(--line); border-radius:12px;
+    padding:12px 13px; cursor:pointer; transition:.15s}
+  .acc:hover{border-color:#3d4a60}
+  .acc.on{border-color:var(--accent); background:linear-gradient(160deg,#1b2740,#171b24)}
+  .acc .t{font-weight:650; font-size:13px; display:flex; align-items:center; gap:7px}
+  .acc .d{color:var(--muted); font-size:11.5px; margin-top:5px}
+  .dot{width:8px; height:8px; border-radius:50%; background:#46536a; display:inline-block}
+  .acc.on .dot{background:var(--accent); box-shadow:0 0 0 3px #6aa6ff22}
+  .rec{font-size:10px; color:var(--green); font-weight:700; margin-left:auto}
+
+  .panel{background:var(--card); border:1px solid var(--line); border-radius:16px;
+    box-shadow:0 18px 50px #0008; overflow:hidden}
+  .ph{display:flex; align-items:center; gap:10px; padding:13px 16px;
+    background:linear-gradient(90deg,#1c2331,#171b24); border-bottom:1px solid var(--line)}
+  .ph .title{font-weight:700; font-size:14px}
+  .ph .key{font-size:10.5px; color:var(--muted); background:#222a39;
+    border:1px solid var(--line); border-radius:6px; padding:2px 7px}
+  .ph .clock{margin-left:auto; color:var(--muted); font-size:12px}
+  .pb{padding:14px 16px 16px}
+
+  .grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:12px; margin-bottom:12px}
+  .card{background:var(--card2); border:1px solid var(--line); border-radius:12px; padding:13px 14px}
+  .lab{font-size:11px; text-transform:uppercase; letter-spacing:.8px; color:var(--muted); font-weight:650}
+  .big{display:flex; align-items:baseline; gap:8px; margin-top:4px}
+  .big .n{font-size:34px; font-weight:750; line-height:1; letter-spacing:-1px}
+  .big .u{font-size:14px; color:var(--muted)}
+  .chip{font-size:10.5px; padding:2px 7px; border-radius:999px; font-weight:700}
+  .chip.g{background:#36d39922; color:var(--green)}
+  .chip.a{background:#fbbf2422; color:var(--amber)}
+  .chip.r{background:#f8717122; color:var(--red)}
+  .track{height:7px; border-radius:99px; background:#0d1119; margin-top:10px; overflow:hidden}
+  .fill{height:100%; border-radius:99px; background:var(--green); transition:width .3s}
+  .meta{display:flex; flex-wrap:wrap; gap:6px 14px; color:var(--muted); font-size:11.5px; margin-top:9px}
+
+  .row{display:flex; align-items:center; gap:9px; margin-top:9px}
+  .row .name{width:62px; font-size:12px; color:var(--muted)}
+  .row .track{flex:1; margin:0; height:6px}
+  .row .pct{width:34px; text-align:right; font-size:12px; font-variant-numeric:tabular-nums}
+
+  .seg{display:flex; gap:6px; flex-wrap:wrap; margin-top:9px}
+  .seg button, .preset button, .apply{
+    background:#222b3a; color:var(--fg); border:1px solid var(--line);
+    border-radius:8px; padding:7px 12px; font-size:12px; cursor:pointer; transition:.12s;
+    font-family:inherit}
+  .seg button:hover, .preset button:hover{border-color:#4d5f7d}
+  .seg button.on{background:var(--accent); color:#07101f; border-color:var(--accent); font-weight:700}
+  .chips{display:flex; gap:6px; flex-wrap:wrap; margin-top:8px}
+  .chips button{background:#1b2130; color:var(--muted); border:1px solid var(--line);
+    border-radius:999px; padding:5px 10px; font-size:11px; cursor:pointer; font-family:inherit}
+  .chips button.on{background:#2b3a5c; color:var(--accent); border-color:#4466a0}
+  .togs{display:flex; flex-wrap:wrap; gap:18px; margin-top:12px; font-size:12px}
+  .tog{display:flex; align-items:center; gap:7px; cursor:pointer}
+  .sw{width:32px; height:18px; border-radius:99px; background:#39435a; position:relative; transition:.15s}
+  .sw:after{content:""; position:absolute; top:3px; left:3px; width:12px; height:12px;
+    border-radius:50%; background:#cbd5e1; transition:.15s}
+  .tog.on .sw{background:var(--accent)}
+  .tog.on .sw:after{left:17px; background:#fff}
+
+  .eqhead{display:flex; flex-wrap:wrap; align-items:center; gap:10px}
+  .preset{display:flex; gap:6px; flex-wrap:wrap; margin-left:auto}
+  .preset button{padding:5px 10px; font-size:11px}
+  .preset button.on{background:#3b3159; border-color:var(--accent2); color:#d8ccff}
+  .bands{display:grid; grid-template-columns:repeat(auto-fit,minmax(56px,1fr)); gap:8px; margin-top:14px}
+  .band{background:#121722; border:1px solid #232c3c; border-radius:9px;
+    padding:8px 6px; text-align:center}
+  .band input[type=range]{width:100%; height:88px; writing-mode:vertical-lr;
+    direction:rtl; accent-color:var(--accent2); cursor:pointer; margin:4px 0}
+  .band .f{font-size:10px; color:var(--muted)}
+  .band .v{font-size:11px; font-weight:650; color:#d8ccff; font-variant-numeric:tabular-nums}
+  .eqfoot{display:flex; align-items:center; flex-wrap:wrap; gap:10px;
+    margin-top:12px; color:var(--muted); font-size:11.5px}
+  .apply{margin-left:auto; background:var(--accent2); color:#140b26; border:0; font-weight:700}
+  .pf{display:flex; align-items:center; justify-content:center; gap:8px;
+    margin-top:10px; height:0; overflow:hidden; opacity:0; transition:.2s;
+    color:var(--green); font-size:12px}
+  .pf.show{height:24px; opacity:1}
+  .foot{border-top:1px solid var(--line); padding:10px 16px; display:flex;
+    flex-wrap:wrap; gap:8px 16px; color:var(--muted); font-size:11px}
+  .note{margin-top:14px; color:var(--muted); font-size:11.5px}
+  .note b{color:var(--fg); font-weight:600}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="top">
+    <h1>Panel Perangkat</h1>
+    <span class="badge">MOCKUP</span>
+    <span class="sub">VXE R1 SE+ &nbsp;·&nbsp; EarFun Air Pro 4</span>
+  </div>
+
+  <div class="access" id="access">
+    <div class="acc on" data-mode="tray">
+      <div class="t"><span class="dot"></span> Tray + panel <span class="rec">REKOMENDASI</span></div>
+      <div class="d">Angka baterai di tray, klik untuk buka panel ini.</div>
+    </div>
+    <div class="acc" data-mode="hotkey">
+      <div class="t"><span class="dot"></span> Hotkey overlay</div>
+      <div class="d"><b>Ctrl+Alt+B</b> memunculkan panel transparan tanpa alt-tab.</div>
+    </div>
+    <div class="acc" data-mode="widget">
+      <div class="t"><span class="dot"></span> Desktop widget</div>
+      <div class="d">Kartu kecil selalu di atas desktop; mengganggu saat fullscreen.</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph">
+      <span class="title">Perangkat Saya</span>
+      <span class="key">Ctrl+Alt+B</span>
+      <span class="clock">21 Nov 2026 · 18:50</span>
+    </div>
+
+    <div class="pb">
+      <div class="grid">
+        <div class="card">
+          <div class="lab">Mouse · VXE R1 SE+</div>
+          <div class="big"><span class="n" id="mN">80</span><span class="u">%</span>
+            <span class="chip g" id="mChip">MENGISI DAYA</span></div>
+          <div class="track"><div class="fill" id="mBar" style="width:80%"></div></div>
+          <div class="meta"><span>Tegangan <b id="mV">4011 mV</b></span><span>Diperbarui 3 dtk lalu</span></div>
+        </div>
+
+        <div class="card">
+          <div class="lab">EarFun Air Pro 4 · TW600</div>
+          <div class="big"><span class="n" style="font-size:22px" id="bSum">Kiri 40% · Kanan 50%</span></div>
+          <div class="row"><span class="name">Kiri</span><div class="track"><div class="fill" style="width:40%;background:var(--amber)"></div></div><span class="pct">40%</span></div>
+          <div class="row"><span class="name">Kanan</span><div class="track"><div class="fill" style="width:50%;background:var(--green)"></div></div><span class="pct">50%</span></div>
+          <div class="row"><span class="name">Case</span><div class="track"><div class="fill" style="width:0%"></div></div><span class="pct">—</span></div>
+          <div class="meta"><span>Firmware v0.4.1</span><span>Case tidak terbaca saat earbud dipakai</span></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:12px">
+        <div class="lab">Mode Suara</div>
+        <div class="seg" id="masterMode">
+          <button data-v="0">Normal</button>
+          <button class="on" data-v="1">ANC</button>
+          <button data-v="2">Ambient</button>
+        </div>
+        <div class="lab" style="margin-top:12px">Sub-mode ANC</div>
+        <div class="chips" id="ancSub">
+          <button data-v="0">AI Ear Adaptive</button>
+          <button data-v="1">Wind Noise</button>
+          <button data-v="2">Strong ANC</button>
+          <button class="on" data-v="3">Balanced ANC</button>
+          <button data-v="4">AI Environment</button>
+        </div>
+        <div class="lab" style="margin-top:12px">Sub-mode Ambient</div>
+        <div class="chips" id="ambSub">
+          <button class="on" data-v="0">Default</button>
+          <button data-v="1">Natural</button>
+        </div>
+        <div class="togs">
+          <div class="tog" data-tog="game"><span class="sw"></span> Game mode</div>
+          <div class="tog on" data-tog="inear"><span class="sw"></span> In-ear detection</div>
+          <div class="tog" data-tog="multi"><span class="sw"></span> Multipoint <span style="color:var(--muted);font-size:10px">(v2)</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="eqhead">
+          <div class="lab">Equalizer · 10 band (±6 dB)</div>
+          <div class="preset" id="eqPreset">
+            <button class="on" data-p="netral">Netral</button>
+            <button data-p="bass">Bass</button>
+            <button data-p="vokal">Vokal</button>
+            <button data-p="adat">Custom</button>
+          </div>
+        </div>
+        <div class="bands" id="bands"></div>
+        <div class="eqfoot">
+          <span>Nilai slider ±10 → gain ±6 dB · disimpan lokal, dikirim ke 10 band DSP</span>
+          <button class="apply" id="applyEq">Terapkan ke earbud</button>
+        </div>
+        <div class="pf" id="pf">✓ 10 band ditulis ke earbud dan disimpan sebagai preset aktif</div>
+      </div>
+    </div>
+
+    <div class="foot">
+      <span>Mouse: HID 0xFF02 · baterai 80% · 4011 mV</span>
+      <span>Earbud: GAIA/SPP · firmware TW600</span>
+      <span>Hotkey: Ctrl+Alt+N ganti mode · Ctrl+Alt+G game mode</span>
+    </div>
+  </div>
+
+  <div class="note">
+    <b>Catatan:</b> ini mockup tampilan, bukan aplikasi final. Semua angka diambil dari hasil spike nyata di PC kamu
+    (mouse 80%, kiri 40%, kanan 50%, ANC Balanced, game mode off). Tombol dan slider bisa dicoba.
+  </div>
+</div>
+
+<script>
+(function(){
+  const freqs=[31.5,63,125,250,500,'1k','2k','4k','8k','16k'];
+  const presets={
+    netral:[0,0,0,0,0,0,0,0,0,0],
+    bass:[8,7,5,3,1,0,0,0,0,0],
+    vokal:[0,1,2,4,6,5,3,2,1,0]
+  };
+  const bands=document.getElementById('bands');
+  let values=presets.netral.slice();
+  values.forEach((v,i)=>{
+    const d=document.createElement('div'); d.className='band';
+    d.innerHTML='<div class="f">'+freqs[i]+' Hz</div>'+
+      '<input type="range" min="-10" max="10" value="'+v+'" data-i="'+i+'">'+
+      '<div class="v" data-v="'+i+'"></div>';
+    bands.appendChild(d);
+  });
+  function paint(){
+    document.querySelectorAll('input[type=range]').forEach(s=>{
+      const v=+s.value;
+      s.closest('.band').querySelector('.v').textContent=
+        (v>0?'+':'')+v+' · '+(v>0?'+':'')+(v*0.6).toFixed(1)+' dB';
+    });
+  }
+  document.querySelectorAll('input[type=range]').forEach(s=>{
+    s.addEventListener('input',()=>{
+      values[+s.dataset.i]=+s.value;
+      document.querySelectorAll('#eqPreset button').forEach(b=>b.classList.remove('on'));
+      document.querySelector('#eqPreset button[data-p="adat"]').classList.add('on');
+      paint();
+    });
+  });
+  document.querySelectorAll('#eqPreset button').forEach(b=>{
+    b.addEventListener('click',()=>{
+      const p=b.dataset.p; if(p==='adat') return;
+      values=presets[p].slice();
+      document.querySelectorAll('input[type=range]').forEach((s,i)=>s.value=values[i]);
+      document.querySelectorAll('#eqPreset button').forEach(x=>x.classList.remove('on'));
+      b.classList.add('on'); paint();
+    });
+  });
+  document.getElementById('applyEq').addEventListener('click',()=>{
+    const pf=document.getElementById('pf');
+    pf.classList.add('show'); setTimeout(()=>pf.classList.remove('show'),2600);
+  });
+  paint();
+
+  function singleGroup(sel){
+    document.querySelectorAll(sel+' button').forEach(b=>b.addEventListener('click',()=>{
+      document.querySelectorAll(sel+' button').forEach(x=>x.classList.remove('on'));
+      b.classList.add('on');
+    }));
+  }
+  singleGroup('#masterMode'); singleGroup('#ancSub'); singleGroup('#ambSub');
+  document.querySelectorAll('.tog').forEach(t=>t.addEventListener('click',()=>{
+    if(t.textContent.includes('v2')) return;
+    t.classList.toggle('on');
+  }));
+  document.querySelectorAll('.acc').forEach(a=>a.addEventListener('click',()=>{
+    document.querySelectorAll('.acc').forEach(x=>x.classList.remove('on'));
+    a.classList.add('on');
+  }));
+})();
+</script>
+</body>
+</html>
