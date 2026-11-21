@@ -15,7 +15,7 @@ import probe_earbud as pe
 import probe_mouse as pm
 
 PORT = 8765
-LOCK = threading.Lock()
+LOCK = {"mouse": threading.Lock(), "tws": threading.Lock()}
 CACHE = {"mouse": {}, "tws": {}}
 
 POLL_CODES = {0x08: 125, 0x04: 250, 0x02: 500, 0x01: 1000, 0x10: 2000, 0x20: 4000, 0x40: 8000}
@@ -40,12 +40,12 @@ def mouse_open():
     return None
 
 
-def mouse_io(h, frame, write=True):
-    _, err = pm.do_io(h, frame, write)
+def mouse_io(h, frame, write=True, timeout_ms=1000, read_ms=1500):
+    _, err = pm.do_io(h, frame, write, timeout_ms)
     if err:
         raise RuntimeError(err)
     time.sleep(0.04)
-    data, err = pm.do_io(h, bytes(17), False, 1500)
+    data, err = pm.do_io(h, bytes(17), False, read_ms)
     if err:
         raise RuntimeError(err)
     if (sum(data) & 0xFF) != 0x55:
@@ -55,27 +55,31 @@ def mouse_io(h, frame, write=True):
 
 def mouse_read():
     last = None
-    for attempt in range(4):
+    for attempt in range(2):
         h = mouse_open()
         if not h:
             raise RuntimeError("mouse tidak ditemukan / sleep")
         try:
+            def io(frame):
+                # mouse yang tidur tidak boleh menahan API belasan detik
+                return mouse_io(h, frame, timeout_ms=400, read_ms=700)
+
             out = {}
-            r = mouse_io(h, bytes([0x08, 0x04] + [0] * 14 + [0x49]))
+            r = io(bytes([0x08, 0x04] + [0] * 14 + [0x49]))
             out["battery"] = r[6]
             out["charging"] = bool(r[7])
             out["mv"] = (r[8] << 8) | r[9]
 
-            r = mouse_io(h, mouse_frame(0x08, 0x0000, b"\x00" * 10))
+            r = io(mouse_frame(0x08, 0x0000, b"\x00" * 10))
             d = r[6:16]
             pairs = [(d[i], d[i + 1]) for i in range(0, 10, 2)]
             out["polling"] = POLL_CODES.get(pairs[0][0], 1000)
             out["activeStage"] = pairs[2][0] if len(pairs) > 2 else 1
 
-            r = mouse_io(h, mouse_frame(0x08, 0x000A, b"\x00" * 10))
+            r = io(mouse_frame(0x08, 0x000A, b"\x00" * 10))
             out["lod"] = r[6] if r[6] in (1, 2) else 1
 
-            r = mouse_io(h, mouse_frame(0x08, 0x0070, b"\x00" * 10))
+            r = io(mouse_frame(0x08, 0x0070, b"\x00" * 10))
             payload = r[6:16]
             for i in range(0, 10, 4):
                 g = payload[i:i + 4]
@@ -85,7 +89,7 @@ def mouse_read():
             return out
         except Exception as exc:
             last = exc
-            time.sleep(0.35)
+            time.sleep(0.25)
         finally:
             pm.k32.CloseHandle(h)
     raise last
@@ -254,12 +258,17 @@ class Handler(BaseHTTPRequestHandler):
 
     def send_json(self, obj, code=200):
         body = json.dumps(obj).encode()
-        self.send_response(code)
-        self.cors()
-        self.send_header("Content-Type", "application/json")
-        self.send_header("Content-Length", str(len(body)))
-        self.end_headers()
-        self.wfile.write(body)
+        try:
+            self.send_response(code)
+            self.cors()
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+            self.wfile.flush()
+        except OSError:
+            # klien (browser/poll) membatalkan koneksi sebelum body terkirim
+            self.close_connection = True
 
     def do_OPTIONS(self):
         self.send_response(204)
@@ -271,14 +280,14 @@ class Handler(BaseHTTPRequestHandler):
             self.send_json({"error": "not found"}, 404)
             return
         errors = {}
-        with LOCK:
-            for name, fn in (("mouse", mouse_read), ("tws", tws_read)):
-                try:
+        for name, fn in (("mouse", mouse_read), ("tws", tws_read)):
+            try:
+                with LOCK[name]:
                     CACHE[name].update(fn())
-                    errors[name] = None
-                except Exception as exc:
-                    errors[name] = str(exc)
-            result = {"mouse": dict(CACHE["mouse"]), "tws": dict(CACHE["tws"]), "errors": errors}
+                errors[name] = None
+            except Exception as exc:
+                errors[name] = str(exc)
+        result = {"mouse": dict(CACHE["mouse"]), "tws": dict(CACHE["tws"]), "errors": errors}
         self.send_json(result)
 
     def do_POST(self):
@@ -294,7 +303,7 @@ class Handler(BaseHTTPRequestHandler):
             return
         device = parts[1]
         try:
-            with LOCK:
+            with LOCK[device]:
                 if device == "mouse":
                     value = mouse_write(body.get("key"), body.get("value"))
                     CACHE["mouse"][body["key"]] = value
@@ -307,6 +316,12 @@ class Handler(BaseHTTPRequestHandler):
             self.send_json({"error": str(exc)}, 500)
 
 
+class QuietServer(ThreadingHTTPServer):
+    def handle_error(self, request, client_address):
+        # jangan tumpahkan traceback saat klien memutus koneksi
+        pass
+
+
 if __name__ == "__main__":
     print(f"Device bridge listening on http://127.0.0.1:{PORT}", flush=True)
-    ThreadingHTTPServer(("127.0.0.1", PORT), Handler).serve_forever()
+    QuietServer(("127.0.0.1", PORT), Handler).serve_forever()

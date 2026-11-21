@@ -13,7 +13,7 @@ import threading
 import time
 import urllib.request
 import webbrowser
-from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+from http.server import SimpleHTTPRequestHandler
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 if sys.stdout is None:  # pythonw tidak punya console
@@ -23,7 +23,7 @@ ROOT = os.path.dirname(HERE)
 DIST = os.path.join(ROOT, "app", "dist")
 sys.path.insert(0, HERE)
 
-from bridge import Handler as BridgeHandler  # noqa: E402
+from bridge import Handler as BridgeHandler, QuietServer  # noqa: E402
 
 API = "http://127.0.0.1:8765"
 PANEL = "http://localhost:4173/"
@@ -346,8 +346,8 @@ def main():
     if not os.path.isdir(DIST):
         raise SystemExit("app/dist tidak ada — jalankan npm run build dulu")
 
-    bridge = ThreadingHTTPServer(("127.0.0.1", 8765), BridgeHandler)
-    ui = ThreadingHTTPServer(("127.0.0.1", 4173), QuietHandler)
+    bridge = QuietServer(("127.0.0.1", 8765), BridgeHandler)
+    ui = QuietServer(("127.0.0.1", 4173), QuietHandler)
     threading.Thread(target=bridge.serve_forever, daemon=True).start()
     threading.Thread(target=ui.serve_forever, daemon=True).start()
 
