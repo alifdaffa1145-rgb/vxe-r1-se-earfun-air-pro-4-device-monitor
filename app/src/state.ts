@@ -33,6 +33,8 @@ export interface TwsState {
   prompt: number
   eq: number[]
   eqPreset: string
+  gestures: number[]
+  findDevice: number
 }
 
 export interface AppState {
@@ -48,6 +50,7 @@ export type Action =
   | { type: 'MOUSE'; patch: Partial<MouseState> }
   | { type: 'TWS'; patch: Partial<TwsState> }
   | { type: 'EQ'; index: number; value: number }
+  | { type: 'GESTURE'; actions: number[] }
 
 // Nilai awal diambil dari hasil probe nyata PC (2026-11-21).
 export const initialState: AppState = {
@@ -84,6 +87,8 @@ export const initialState: AppState = {
     prompt: 0,
     eq: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     eqPreset: 'netral',
+    gestures: [3, 2, 1, 1, 4, 5, 8, 8],
+    findDevice: 0,
   },
 }
 
@@ -102,6 +107,8 @@ export function reducer(state: AppState, action: Action): AppState {
       eq[action.index] = action.value
       return { ...state, tws: { ...state.tws, eq, eqPreset: 'adat' } }
     }
+    case 'GESTURE':
+      return { ...state, tws: { ...state.tws, gestures: action.actions.slice() } }
     default:
       return state
   }

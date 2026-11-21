@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import type { Action, AppState, Filter, MouseState, TwsState } from '../state'
 import {
   ANC_SUBS,
@@ -375,8 +375,8 @@ function TwsAudio({ tws, dispatch }: { tws: TwsState; dispatch: Dispatch }) {
             { value: 2, label: 'Kanan' },
             { value: 3, label: 'Keduanya' },
           ]}
-          value={0}
-          onChange={() => undefined}
+          value={tws.findDevice}
+          onChange={v => dispatch({ type: 'TWS', patch: { findDevice: v } })}
         />
         <small className="hint">Memainkan suara keras</small>
       </Field>
@@ -412,9 +412,7 @@ function TwsConnect({ tws, dispatch }: { tws: TwsState; dispatch: Dispatch }) {
   )
 }
 
-function TwsGesture() {
-  const initial = [3, 2, 1, 1, 4, 5, 8, 8]
-  const [actions, setActions] = useState<number[]>(initial)
+function TwsGesture({ tws, dispatch }: { tws: TwsState; dispatch: Dispatch }) {
   return (
     <Card arche="D" cat="audio" title="Matriks Gestur" icon="👆">
       <div className="gesture-grid">
@@ -427,8 +425,13 @@ function TwsGesture() {
               {GESTURE_ACTIONS.map(a => (
                 <button
                   key={a.value}
-                  className={actions[i] === a.value ? 'chip on' : 'chip'}
-                  onClick={() => setActions(prev => prev.map((v, idx) => (idx === i ? a.value : v)))}
+                  className={tws.gestures[i] === a.value ? 'chip on' : 'chip'}
+                  onClick={() =>
+                    dispatch({
+                      type: 'GESTURE',
+                      actions: tws.gestures.map((v, idx) => (idx === i ? a.value : v)),
+                    })
+                  }
                 >
                   {a.label}
                 </button>
@@ -437,7 +440,7 @@ function TwsGesture() {
           </div>
         ))}
       </div>
-      <small className="hint">030B = 33 byte · 16 pasangan [jenis, aksi]</small>
+      <small className="hint">030B = 33 byte · 16 pasangan [jenis, aksi] · ditulis via 030A</small>
     </Card>
   )
 }
@@ -501,7 +504,7 @@ export default function Cards({
       {visible('baterai') && <TwsBattery tws={tws} />}
       {visible('audio') && <TwsAudio tws={tws} dispatch={dispatch} />}
       {visible('audio') && <TwsEq tws={tws} dispatch={dispatch} />}
-      {visible('audio') && <TwsGesture />}
+      {visible('audio') && <TwsGesture tws={tws} dispatch={dispatch} />}
       {visible('koneksi') && <TwsConnect tws={tws} dispatch={dispatch} />}
     </>
   )

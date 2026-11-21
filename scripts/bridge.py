@@ -176,6 +176,7 @@ TWS_SET = {
     "gestureLock": 0x0334,
     "mic": 0x0330,
     "prompt": 0x0338,
+    "findDevice": 0x0332,
 }
 TWS_QUERY = {
     "noiseMode": 0x0315,
@@ -186,7 +187,23 @@ TWS_QUERY = {
     "gestureLock": 0x0335,
     "mic": 0x0331,
     "prompt": 0x0339,
+    "findDevice": 0x0333,
 }
+
+GESTURE_TYPES = [1, 1, 2, 2, 3, 3, 17, 17]
+
+
+def tws_write_gesture(actions):
+    h = tws_open()
+    try:
+        for i, action in enumerate(actions[:8]):
+            t = GESTURE_TYPES[i]
+            payload = bytes([t, int(action), 0, 0]) if i % 2 == 0 else bytes([0, 0, t, int(action)])
+            pe.exchange(h, 0x030A, payload, 1.2)
+            time.sleep(0.12)
+        return len(actions[:8])
+    finally:
+        pe.k32.CloseHandle(h)
 
 
 def tws_write_eq(values):
@@ -211,6 +228,8 @@ def tws_write_eq(values):
 def tws_write(key, value):
     if key == "eq":
         return tws_write_eq(value)
+    if key == "gesture":
+        return tws_write_gesture(value)
     if key not in TWS_SET:
         raise RuntimeError("TWS key tidak didukung / berisiko: " + key)
     h = tws_open()

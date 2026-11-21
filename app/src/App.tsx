@@ -18,6 +18,7 @@ const TWS_WRITABLE = [
   'gestureLock',
   'mic',
   'prompt',
+  'findDevice',
 ]
 
 export default function App() {
@@ -78,6 +79,8 @@ export default function App() {
       const eq = state.tws.eq.slice()
       eq[action.index] = action.value
       send('tws', 'eq', eq)
+    } else if (action.type === 'GESTURE') {
+      send('tws', 'gesture', action.actions)
     }
   }
 
