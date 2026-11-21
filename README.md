@@ -21,12 +21,25 @@ npm run build    # typecheck + production build
 npm run preview  # sajikan hasil build
 ```
 
+## Menjalankan dengan perangkat fisik
+
+Jalankan bridge Python (stdlib, tanpa dependency) lalu UI:
+
+```bash
+python scripts/bridge.py          # http://127.0.0.1:8765
+cd app && npm run dev             # UI otomatis poll /api/status tiap 5 detik
+```
+
+UI menulis hanya untuk perintah aman: mouse `polling`, `lod`, `debounce`; TWS
+`noiseMode`, `ancSub`, `ambSub`, `game`, `inEar`, `gestureLock`, `mic`, `prompt`,
+dan `eq`. Codec/multipoint sengaja tidak ditulis otomatis karena memicu reboot.
+
 ## Status integrasi perangkat
 
-UI sepenuhnya state-driven dan kontrolnya memakai state yang sama dengan perintah
-protokol asli (peta command ada di `docs/UI.md` Section 8). Saat ini data perangkat
-bernilai contoh yang diambil dari hasil probe nyata; jembatan ke perangkat fisik
-(HID mouse / GAIA earbud) belum dihubungkan ke bundle web.
+UI terhubung ke perangkat fisik lewat bridge HTTP lokal (`scripts/bridge.py`).
+Data perangkat di-poll tiap 5 detik; kontrol aman langsung menulis ke HID/GAIA
+dengan readback. Codec/multipoint/EQ-write berisiko tetap dibatasi (lihat `docs/UI.md`
+Section 8 dan `docs/FITUR-LENGKAP.md`).
 
 ## Protokol yang sudah terverifikasi
 
