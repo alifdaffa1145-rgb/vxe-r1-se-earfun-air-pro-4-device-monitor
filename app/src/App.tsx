@@ -8,7 +8,17 @@ import FilterBar from './components/FilterBar'
 import Cards from './components/Cards'
 import ViewDots from './components/ViewDots'
 
-const MOUSE_WRITABLE = ['polling', 'lod', 'debounce']
+const MOUSE_WRITABLE = [
+  'polling',
+  'lod',
+  'debounce',
+  'activeStage',
+  'motionSync',
+  'angleSnap',
+  'led',
+  'sleep',
+  'dpiStage',
+]
 const TWS_WRITABLE = [
   'noiseMode',
   'ancSub',
@@ -94,6 +104,9 @@ export default function App() {
       send('tws', 'eq', eq, state.tws.eq)
     } else if (action.type === 'GESTURE') {
       send('tws', 'gesture', action.actions, state.tws.gestures)
+    } else if (action.type === 'DPI_STAGE') {
+      send('mouse', 'dpiStage', [action.index, action.dpi],
+        [action.index, state.mouse.dpiStages[action.index]])
     }
   }
 

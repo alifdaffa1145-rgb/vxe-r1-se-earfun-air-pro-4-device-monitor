@@ -881,6 +881,25 @@ input[type='range'] {
   color: var(--text-on-cream-primary);
 }
 
+.dpi-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dpi-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 4px 6px;
+  border-radius: var(--radius-badge);
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-pill-inactive);
+  color: var(--text-on-dark-primary);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
 .dpi strong {
   font-size: 15px;
   font-weight: 600;

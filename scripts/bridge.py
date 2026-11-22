@@ -53,6 +53,8 @@ def is_connected(name):
     return CACHE_ERR[name] is None and (time.monotonic() - CACHE_TS[name]) <= FRESH
 
 POLL_CODES = {0x08: 125, 0x04: 250, 0x02: 500, 0x01: 1000, 0x10: 2000, 0x20: 4000, 0x40: 8000}
+DPI_STAGE_BASES = [0x000C, 0x0014, 0x001C, 0x0024]
+DPI_STEP = 50  # sensor CORE26K: byte = dpi / 50
 FREQS = [0x005E, 0x00BD, 0x0177, 0x02EE, 0x05DC, 0x0BB8, 0x1770, 0x2EE0, 0x5DC0, 0xBB80]
 
 
@@ -120,6 +122,28 @@ def mouse_read():
                 if len(g) == 4 and (sum(g) & 0xFF) == 0x55 and g[0] == 0x02:
                     out["debounce"] = g[1]
                     break
+
+            r = io(mouse_frame(0x08, 0x00B5, b"\x00" * 10))
+            out["sleep"] = (r[6 + 2] * 10) if r[6 + 2] else None
+
+            r = io(mouse_frame(0x08, 0x00A9, b"\x00" * 10))
+            out["motionSync"] = bool(r[6 + 2])
+
+            r = io(mouse_frame(0x08, 0x00BD, b"\x00" * 10))
+            out["angleSnap"] = r[6 + 2] != 0xFF
+
+            r = io(mouse_frame(0x08, 0x004C, b"\x00" * 10))
+            out["led"] = r[6] != 0
+
+            stages = []
+            for base in DPI_STAGE_BASES:
+                try:
+                    r = io(mouse_frame(0x08, base, b"\x00" * 4))
+                    b = r[6]
+                    stages.append(b * DPI_STEP if b else 0)
+                except Exception:
+                    stages.append(0)
+            out["dpiStages"] = stages
             return out
         except Exception as exc:
             last = exc
@@ -200,6 +224,62 @@ def mouse_write(key, value):
             pair = bytes([sel, v, 0x00, (0x55 - sel - v) & 0xFF])
             mouse_io(h, mouse_frame(0x07, 0x0070, pair), True)
             return v
+        if key == "activeStage":
+            n = int(value)
+            r = mouse_io(h, mouse_frame(0x08, 0x0000, b"\x00" * 10))
+            d = bytearray(r[6:16])
+            d[4] = n
+            d[5] = (0x55 - n) & 0xFF
+            mouse_io(h, mouse_frame(0x07, 0x0000, bytes(d)), True)
+            time.sleep(0.2)
+            return mouse_io(h, mouse_frame(0x08, 0x0000, b"\x00" * 10))[6 + 4]
+        if key == "motionSync":
+            v = 1 if value else 0
+            r = mouse_io(h, mouse_frame(0x08, 0x00A9, b"\x00" * 10))
+            d = bytearray(r[6:16])
+            d[2] = v
+            d[3] = (0x55 - v) & 0xFF
+            mouse_io(h, mouse_frame(0x07, 0x00A9, bytes(d)), True)
+            time.sleep(0.2)
+            return bool(mouse_io(h, mouse_frame(0x08, 0x00A9, b"\x00" * 10))[6 + 2])
+        if key == "sleep":
+            code = max(0, min(255, int(value) // 10))
+            r = mouse_io(h, mouse_frame(0x08, 0x00B5, b"\x00" * 6))
+            d = bytearray(r[6:12])
+            d[2] = code
+            d[3] = (0x55 - code) & 0xFF
+            mouse_io(h, mouse_frame(0x07, 0x00B5, bytes(d)), True)
+            time.sleep(0.2)
+            rb = mouse_io(h, mouse_frame(0x08, 0x00B5, b"\x00" * 6))[6 + 2]
+            return rb * 10
+        if key == "angleSnap":
+            on = bool(value)
+            r = mouse_io(h, mouse_frame(0x08, 0x00BD, b"\x00" * 4))
+            d = bytearray(r[6:10])
+            d[2] = 4 if on else 0xFF
+            d[3] = ((0x55 - d[2]) & 0xFF) if on else 0xFF
+            mouse_io(h, mouse_frame(0x07, 0x00BD, bytes(d)), True)
+            time.sleep(0.2)
+            return bool(mouse_io(h, mouse_frame(0x08, 0x00BD, b"\x00" * 4))[6 + 2] != 0xFF)
+        if key == "led":
+            on = bool(value)
+            mode = 2 if on else 0
+            r = mouse_io(h, mouse_frame(0x08, 0x004C, b"\x00" * 10))
+            d = bytearray(r[6:16])
+            d[0] = mode
+            d[1] = (0x55 - mode) & 0xFF
+            mouse_io(h, mouse_frame(0x07, 0x004C, bytes(d)), True)
+            time.sleep(0.2)
+            return mouse_io(h, mouse_frame(0x08, 0x004C, b"\x00" * 10))[6] != 0
+        if key == "dpiStage":
+            idx, dpi = int(value[0]), int(value[1])
+            byte = max(0, min(255, dpi // DPI_STEP))
+            addr = DPI_STAGE_BASES[idx]
+            mouse_io(h, mouse_frame(0x07, addr,
+                                    bytes([byte, byte, 0, (0x55 - 2 * byte) & 0xFF])), True)
+            time.sleep(0.2)
+            rb = mouse_io(h, mouse_frame(0x08, addr, b"\x00" * 4))[6]
+            return rb * DPI_STEP
         raise RuntimeError("mouse key tidak didukung: " + key)
     finally:
         pm.k32.CloseHandle(h)

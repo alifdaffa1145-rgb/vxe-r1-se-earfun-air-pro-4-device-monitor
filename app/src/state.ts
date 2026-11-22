@@ -57,6 +57,7 @@ export type Action =
   | { type: 'TWS'; patch: Partial<TwsState> }
   | { type: 'EQ'; index: number; value: number }
   | { type: 'GESTURE'; actions: number[] }
+  | { type: 'DPI_STAGE'; index: number; dpi: number }
   | { type: 'SET_CONNECTED'; connected: ConnectedState }
 
 // Nilai awal diambil dari hasil probe nyata PC (2026-11-21).
@@ -119,6 +120,11 @@ export function reducer(state: AppState, action: Action): AppState {
       return { ...state, tws: { ...state.tws, gestures: action.actions.slice() } }
     case 'SET_CONNECTED':
       return { ...state, connected: action.connected }
+    case 'DPI_STAGE': {
+      const dpiStages = state.mouse.dpiStages.slice()
+      dpiStages[action.index] = action.dpi
+      return { ...state, mouse: { ...state.mouse, dpiStages } }
+    }
     default:
       return state
   }

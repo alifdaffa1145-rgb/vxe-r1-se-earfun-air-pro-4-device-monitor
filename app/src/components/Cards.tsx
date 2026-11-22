@@ -155,14 +155,26 @@ function MousePerf({ mouse, dispatch }: { mouse: MouseState; dispatch: Dispatch 
       <Field label="DPI stage">
         <div className="dpi-grid">
           {mouse.dpiStages.map((dpi, i) => (
-            <button
-              key={dpi}
-              className={i === mouse.activeStage ? 'dpi on' : 'dpi'}
-              onClick={() => dispatch({ type: 'MOUSE', patch: { activeStage: i } })}
-            >
-              <strong>{dpi}</strong>
-              <small>Stage {i + 1}</small>
-            </button>
+            <div className="dpi-cell" key={i}>
+              <button
+                className={i === mouse.activeStage ? 'dpi on' : 'dpi'}
+                onClick={() => dispatch({ type: 'MOUSE', patch: { activeStage: i } })}
+              >
+                <strong>{dpi}</strong>
+                <small>Stage {i + 1}</small>
+              </button>
+              <input
+                type="number"
+                className="dpi-input"
+                min={100}
+                max={18000}
+                step={50}
+                value={dpi}
+                onChange={e =>
+                  dispatch({ type: 'DPI_STAGE', index: i, dpi: Number(e.target.value) })
+                }
+              />
+            </div>
           ))}
         </div>
       </Field>
