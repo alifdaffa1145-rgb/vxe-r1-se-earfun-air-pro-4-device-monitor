@@ -36,6 +36,7 @@ export default function App() {
         const s = await getStatus()
         if (!alive) return
         setErrors(s.errors)
+        dispatch({ type: 'SET_CONNECTED', connected: s.connected })
         if (s.mouse && Object.keys(s.mouse).length) {
           dispatch({ type: 'MOUSE', patch: s.mouse as Partial<MouseState> })
         }
@@ -55,13 +56,25 @@ export default function App() {
     }
   }, [])
 
-  const send = (device: 'mouse' | 'tws', key: string, value: unknown) => {
+  const send = (device: 'mouse' | 'tws', key: string, value: unknown, rollback?: unknown) => {
     const id = `${device}.${key}`
+    const patch = (data: Record<string, unknown>) =>
+      dispatch({ type: device === 'mouse' ? 'MOUSE' : 'TWS', patch: data as never })
     window.clearTimeout(timers.current[id])
     timers.current[id] = window.setTimeout(() => {
-      void setDevice(device, key, value).catch(() =>
-        setErrors(e => ({ ...e, [device]: 'write gagal' })),
-      )
+      void setDevice(device, key, value)
+        .then(rb => {
+          // konfirmasi nilai yang benar-benar ada di perangkat
+          if (rb !== undefined && rb !== null && key !== 'eq' && key !== 'gesture') {
+            patch({ [key]: rb })
+          }
+        })
+        .catch(err => {
+          const msg = err instanceof Error ? err.message : String(err)
+          setErrors(e => ({ ...e, [device]: msg }))
+          // kembalikan tampilan ke nilai sebelum diubah pengguna
+          if (rollback !== undefined) patch({ [key]: rollback })
+        })
     }, 220)
   }
 
@@ -69,18 +82,18 @@ export default function App() {
     dispatch(action)
     if (action.type === 'MOUSE') {
       Object.entries(action.patch).forEach(([k, v]) => {
-        if (MOUSE_WRITABLE.includes(k)) send('mouse', k, v)
+        if (MOUSE_WRITABLE.includes(k)) send('mouse', k, v, (state.mouse as never as Record<string, unknown>)[k])
       })
     } else if (action.type === 'TWS') {
       Object.entries(action.patch).forEach(([k, v]) => {
-        if (TWS_WRITABLE.includes(k)) send('tws', k, v)
+        if (TWS_WRITABLE.includes(k)) send('tws', k, v, (state.tws as never as Record<string, unknown>)[k])
       })
     } else if (action.type === 'EQ') {
       const eq = state.tws.eq.slice()
       eq[action.index] = action.value
-      send('tws', 'eq', eq)
+      send('tws', 'eq', eq, state.tws.eq)
     } else if (action.type === 'GESTURE') {
-      send('tws', 'gesture', action.actions)
+      send('tws', 'gesture', action.actions, state.tws.gestures)
     }
   }
 
@@ -94,7 +107,7 @@ export default function App() {
       <div className="shell">
         <Dock tab={state.tab} onTab={setTab} />
         <main className="window">
-          <TopNav tab={state.tab} onTab={setTab} />
+          <TopNav tab={state.tab} onTab={setTab} connected={state.connected} />
           <Hero tab={state.tab} mouse={state.mouse} tws={state.tws} />
           <FilterBar
             filter={state.filter}

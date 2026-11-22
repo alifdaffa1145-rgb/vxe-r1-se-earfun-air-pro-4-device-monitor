@@ -1,14 +1,27 @@
 import { useEffect, useRef, useState } from 'react'
-import type { Tab } from '../state'
+import type { ConnectedState, Tab } from '../state'
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'mouse', label: 'Mouse' },
   { id: 'tws', label: 'TWS' },
 ]
 
-export default function TopNav({ tab, onTab }: { tab: Tab; onTab: (t: Tab) => void }) {
+export default function TopNav({
+  tab,
+  onTab,
+  connected,
+}: {
+  tab: Tab
+  onTab: (t: Tab) => void
+  connected: ConnectedState
+}) {
   const refs = useRef<Array<HTMLButtonElement | null>>([])
   const [glide, setGlide] = useState({ left: 0, width: 0 })
+  const total = (connected.mouse ? 1 : 0) + (connected.tws ? 1 : 0)
+  const which = [
+    connected.mouse ? 'Mouse' : null,
+    connected.tws ? 'TWS' : null,
+  ].filter(Boolean)
 
   useEffect(() => {
     const i = TABS.findIndex(t => t.id === tab)
@@ -40,8 +53,8 @@ export default function TopNav({ tab, onTab }: { tab: Tab; onTab: (t: Tab) => vo
       <div className="status-capsule">
         <span className="avatar">DF</span>
         <span className="status-text">
-          <strong>Terhubung</strong>
-          <small>2 perangkat</small>
+          <strong>{total === 2 ? 'Terhubung' : total === 1 ? '1 perangkat' : 'Terputus'}</strong>
+          <small>{which.length ? which.join(' · ') : 'tidak ada perangkat'}</small>
         </span>
         <button className="status-btn" title="Setelan" aria-label="Setelan">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

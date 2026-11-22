@@ -23,6 +23,7 @@ ROOT = os.path.dirname(HERE)
 DIST = os.path.join(ROOT, "app", "dist")
 sys.path.insert(0, HERE)
 
+import bridge
 from bridge import Handler as BridgeHandler, QuietServer  # noqa: E402
 
 API = "http://127.0.0.1:8765"
@@ -91,7 +92,8 @@ WNDPROC = ctypes.WINFUNCTYPE(ctypes.c_ssize_t, wt.HWND, wt.UINT, wt.WPARAM, wt.L
 NIM_ADD, NIM_MODIFY, NIM_DELETE = 0, 1, 2
 NIF_MESSAGE, NIF_ICON, NIF_TIP, NIF_STATE, NIF_INFO = 1, 2, 4, 8, 16
 WM_APP_TRAY, WM_APP_REFRESH = 0x8001, 0x8002
-WM_LBUTTONDOWN, WM_RBUTTONDOWN, WM_COMMAND = 0x0201, 0x0204, 0x0111
+WM_LBUTTONDOWN, WM_LBUTTONDBLCLK = 0x0201, 0x0203
+WM_RBUTTONDOWN, WM_CONTEXTMENU, WM_COMMAND = 0x0204, 0x007B, 0x0111
 MF_STRING, MF_SEPARATOR, MF_CHECKED, MF_DISABLED = 0, 0x800, 0x8, 0x2
 TPM_RIGHTBUTTON = 0x2
 HWND_MESSAGE = ctypes.c_void_p(-3)
@@ -285,10 +287,13 @@ def show_menu(hwnd):
 @WNDPROC
 def wndproc(hwnd, msg, wparam, lparam):
     if msg == WM_APP_TRAY:
-        event = (lparam >> 16) & 0xFFFF
-        if event == WM_LBUTTONDOWN:
+        # lParam notifikasi ikon ISINYA pesan (WM_LBUTTONDOWN dkk.), bukan koordinat
+        event = lparam & 0xFFFF
+        if event in (WM_LBUTTONDOWN, WM_LBUTTONDBLCLK):
+            print("tray: buka panel", flush=True)
             webbrowser.open(PANEL)
-        elif event == WM_RBUTTONDOWN:
+        elif event in (WM_RBUTTONDOWN, WM_CONTEXTMENU):
+            print("tray: menu", flush=True)
             show_menu(hwnd)
         return 0
     if msg == WM_APP_REFRESH:
@@ -318,10 +323,12 @@ def wndproc(hwnd, msg, wparam, lparam):
 
 def poll_loop():
     global LOW_NOTIFIED
-    while not STOP.wait(10):
+    while not STOP.wait(15):
         try:
-            with urllib.request.urlopen(API + "/api/status", timeout=5) as res:
-                STATUS.update(json.load(res))
+            bridge.refresh_if_due("mouse", bridge.mouse_read)
+            bridge.refresh_if_due("tws", bridge.tws_read)
+            STATUS.clear()
+            STATUS.update({"mouse": dict(bridge.CACHE["mouse"]), "tws": dict(bridge.CACHE["tws"])})
             u32.PostMessageW(HWND, WM_APP_REFRESH, 0, 0)
             pct = STATUS.get("mouse", {}).get("battery")
             if isinstance(pct, int) and pct <= 20 and not LOW_NOTIFIED:

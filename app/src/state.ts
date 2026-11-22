@@ -37,11 +37,17 @@ export interface TwsState {
   findDevice: number
 }
 
+export interface ConnectedState {
+  mouse: boolean
+  tws: boolean
+}
+
 export interface AppState {
   tab: Tab
   filter: Filter
   mouse: MouseState
   tws: TwsState
+  connected: ConnectedState
 }
 
 export type Action =
@@ -51,6 +57,7 @@ export type Action =
   | { type: 'TWS'; patch: Partial<TwsState> }
   | { type: 'EQ'; index: number; value: number }
   | { type: 'GESTURE'; actions: number[] }
+  | { type: 'SET_CONNECTED'; connected: ConnectedState }
 
 // Nilai awal diambil dari hasil probe nyata PC (2026-11-21).
 export const initialState: AppState = {
@@ -90,6 +97,7 @@ export const initialState: AppState = {
     gestures: [3, 2, 1, 1, 4, 5, 8, 8],
     findDevice: 0,
   },
+  connected: { mouse: false, tws: false },
 }
 
 export function reducer(state: AppState, action: Action): AppState {
@@ -109,6 +117,8 @@ export function reducer(state: AppState, action: Action): AppState {
     }
     case 'GESTURE':
       return { ...state, tws: { ...state.tws, gestures: action.actions.slice() } }
+    case 'SET_CONNECTED':
+      return { ...state, connected: action.connected }
     default:
       return state
   }

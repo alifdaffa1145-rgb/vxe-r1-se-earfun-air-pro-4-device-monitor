@@ -17,6 +17,40 @@ import probe_mouse as pm
 PORT = 8765
 LOCK = {"mouse": threading.Lock(), "tws": threading.Lock()}
 CACHE = {"mouse": {}, "tws": {}}
+CACHE_TS = {"mouse": 0.0, "tws": 0.0}
+CACHE_ERR = {"mouse": None, "tws": None}
+CACHE_ERR_TS = {"mouse": 0.0, "tws": 0.0}
+FRESH = 5.0        # detik: data dianggap masih segar
+ERR_WAIT = 12.0    # detik: jeda percobaan ulang setelah gagal
+LOCK_WAIT = 3.5    # detik: batas menunggu perangkat lain selesai
+
+
+def refresh(name, fn):
+    """Baca perangkat di balik lock; kegagalan dicatat, cache lama dipertahankan."""
+    with LOCK[name]:
+        try:
+            CACHE[name].update(fn())
+            CACHE_ERR[name] = None
+            CACHE_TS[name] = time.monotonic()
+        except Exception as exc:
+            CACHE_ERR[name] = str(exc)
+            CACHE_ERR_TS[name] = time.monotonic()
+
+
+def refresh_if_due(name, fn):
+    """Baca ulang hanya kalau cache basi; setelah gagal, tunggu ERR_WAIT."""
+    now = time.monotonic()
+    if CACHE_ERR[name] is None:
+        if now - CACHE_TS[name] < FRESH:
+            return False
+    elif now - CACHE_ERR_TS[name] < ERR_WAIT:
+        return False
+    refresh(name, fn)
+    return True
+
+
+def is_connected(name):
+    return CACHE_ERR[name] is None and (time.monotonic() - CACHE_TS[name]) <= FRESH
 
 POLL_CODES = {0x08: 125, 0x04: 250, 0x02: 500, 0x01: 1000, 0x10: 2000, 0x20: 4000, 0x40: 8000}
 FREQS = [0x005E, 0x00BD, 0x0177, 0x02EE, 0x05DC, 0x0BB8, 0x1770, 0x2EE0, 0x5DC0, 0xBB80]
@@ -279,15 +313,14 @@ class Handler(BaseHTTPRequestHandler):
         if self.path != "/api/status":
             self.send_json({"error": "not found"}, 404)
             return
-        errors = {}
-        for name, fn in (("mouse", mouse_read), ("tws", tws_read)):
-            try:
-                with LOCK[name]:
-                    CACHE[name].update(fn())
-                errors[name] = None
-            except Exception as exc:
-                errors[name] = str(exc)
-        result = {"mouse": dict(CACHE["mouse"]), "tws": dict(CACHE["tws"]), "errors": errors}
+        refresh_if_due("mouse", mouse_read)
+        refresh_if_due("tws", tws_read)
+        result = {
+            "mouse": dict(CACHE["mouse"]),
+            "tws": dict(CACHE["tws"]),
+            "errors": dict(CACHE_ERR),
+            "connected": {name: is_connected(name) for name in CACHE},
+        }
         self.send_json(result)
 
     def do_POST(self):
@@ -313,6 +346,7 @@ class Handler(BaseHTTPRequestHandler):
                         CACHE["tws"][body["key"]] = value
             self.send_json({"ok": True, "readback": value})
         except Exception as exc:
+            CACHE_ERR[device] = str(exc)
             self.send_json({"error": str(exc)}, 500)
 
 

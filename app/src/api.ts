@@ -2,6 +2,7 @@ export interface BridgeStatus {
   mouse: Record<string, unknown>
   tws: Record<string, unknown>
   errors: { mouse: string | null; tws: string | null }
+  connected: { mouse: boolean; tws: boolean }
 }
 
 const BASE =
