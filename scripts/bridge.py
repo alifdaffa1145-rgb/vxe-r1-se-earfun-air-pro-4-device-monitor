@@ -20,8 +20,8 @@ CACHE = {"mouse": {}, "tws": {}}
 CACHE_TS = {"mouse": 0.0, "tws": 0.0}
 CACHE_ERR = {"mouse": None, "tws": None}
 CACHE_ERR_TS = {"mouse": 0.0, "tws": 0.0}
-FRESH = 5.0        # detik: data dianggap masih segar
-ERR_WAIT = 12.0    # detik: jeda percobaan ulang setelah gagal
+FRESH = 2.0        # detik: data dianggap masih segar
+ERR_WAIT = 8.0     # detik: jeda percobaan ulang setelah gagal
 LOCK_WAIT = 3.5    # detik: batas menunggu perangkat lain selesai
 
 
