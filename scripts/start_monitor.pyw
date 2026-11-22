@@ -152,6 +152,7 @@ HWND = None
 NID = None
 CURRENT_ICON = None
 LOW_NOTIFIED = False
+MUTEX = None
 
 
 # ---------- ikon ----------
@@ -349,9 +350,16 @@ class QuietHandler(SimpleHTTPRequestHandler):
 
 
 def main():
-    global HWND, NID, CURRENT_ICON
+    global HWND, NID, CURRENT_ICON, MUTEX
     if not os.path.isdir(DIST):
         raise SystemExit("app/dist tidak ada — jalankan npm run build dulu")
+
+    # satu instance saja: named mutex (hilang otomatis kalau proses mati)
+    k32.CreateMutexW.argtypes = [ctypes.c_void_p, wt.BOOL, wt.LPCWSTR]
+    k32.CreateMutexW.restype = wt.HANDLE
+    MUTEX = k32.CreateMutexW(None, False, "DeviceMonitorTraySingleInstance")
+    if not MUTEX or ctypes.get_last_error() == 183:  # ERROR_ALREADY_EXISTS
+        raise SystemExit("Device Monitor sudah berjalan")
 
     bridge = QuietServer(("127.0.0.1", 8765), BridgeHandler)
     ui = QuietServer(("127.0.0.1", 4173), QuietHandler)
