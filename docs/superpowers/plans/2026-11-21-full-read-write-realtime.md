@@ -47,6 +47,8 @@
 
 ### Task 2: Write reversible DPI stage, LED, motion sync, sleep, angle snap
 
+**Kontrol mouse yang masih lokal (dari inventarisasi):** `activeStage` (grid 4 tombol, Cards.tsx 155–168), `motionSync` (199–204), `angleSnap` (205–209), `led` (210–214), `sleep` (216–227).
+
 **Files:**
 - Modify: `scripts/bridge.py` (`mouse_write`, allowlist), `scripts/read_mouse_regs.py` (skrip uji)
 - Test: `scripts/probe_mouse_write2.py`
@@ -71,6 +73,8 @@
 - [ ] **Step 4: Commit.**
 
 ### Task 4: TWS codec & multipoint (butuh izin)
+
+**Kontrol TWS yang masih lokal:** `codec` (5 chip, Cards.tsx 390–397), `multipoint` (toggle, 398–404), `eqPreset` (preset EQ, 451–461 — pakai jalur `eq` yang sudah ada).
 
 **Files:**
 - Modify: `scripts/bridge.py` (`TWS_SET`/`TWS_QUERY`), `app/src/App.tsx` (allowlist)
