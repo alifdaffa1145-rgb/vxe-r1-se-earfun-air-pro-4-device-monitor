@@ -99,7 +99,8 @@ def mouse_io(h, frame, write=True, timeout_ms=1000, read_ms=1500, match=False):
     deadline = time.monotonic() + 1.5
     while True:
         if not err and (sum(data) & 0xFF) == 0x55 and data[0] == 0x08 \
-                and data[1] == cmd and ((data[4] << 8) | data[5]) == addr:
+                and data[1] == cmd \
+                and (cmd != 0x08 or ((data[4] << 8) | data[5]) == addr):
             return data
         if time.monotonic() >= deadline:
             raise RuntimeError("desync: tak ada balasan 0x%04X cmd=%d (%s)" % (

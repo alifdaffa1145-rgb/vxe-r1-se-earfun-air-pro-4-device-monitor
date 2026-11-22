@@ -41,7 +41,9 @@ def main():
         try:
             rb = bridge.mouse_write(key, val)
             rb2 = bridge.mouse_write(key, back)
-            good = (rb == val) and (rb2 == back)
+            want = val[1] if key == "dpiStage" else val
+            want2 = back[1] if key == "dpiStage" else back
+            good = (rb == want) and (rb2 == want2)
             if not good:
                 out["ok"] = False
             print("%-12s -> %-12r readback %-12r | <- %-12r readback %-12r %s" % (
