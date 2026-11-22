@@ -76,17 +76,35 @@ def mouse_open():
     return None
 
 
-def mouse_io(h, frame, write=True, timeout_ms=1000, read_ms=1500):
+def mouse_io(h, frame, write=True, timeout_ms=1000, read_ms=1500, match=False):
+    """Kirim frame lalu baca balasan.
+
+    match=True: buang frame basi di antrean dan tunggu frame yang cmd+addr-nya
+    sama dengan request. Perangkat kadang membalas dengan frame sisa dari
+    operasi sebelumnya, jadi tanpa match semua readback bisa membaca register
+    yang salah.
+    """
     _, err = pm.do_io(h, frame, write, timeout_ms)
     if err:
         raise RuntimeError(err)
     time.sleep(0.04)
+    cmd, addr = frame[1], (frame[4] << 8) | frame[5]
     data, err = pm.do_io(h, bytes(17), False, read_ms)
-    if err:
-        raise RuntimeError(err)
-    if (sum(data) & 0xFF) != 0x55:
-        raise RuntimeError("checksum")
-    return data
+    if not match:
+        if err:
+            raise RuntimeError(err)
+        if (sum(data) & 0xFF) != 0x55:
+            raise RuntimeError("checksum")
+        return data
+    deadline = time.monotonic() + 1.5
+    while True:
+        if not err and (sum(data) & 0xFF) == 0x55 and data[0] == 0x08 \
+                and data[1] == cmd and ((data[4] << 8) | data[5]) == addr:
+            return data
+        if time.monotonic() >= deadline:
+            raise RuntimeError("desync: tak ada balasan 0x%04X cmd=%d (%s)" % (
+                addr, cmd, err or "addr tidak cocok"))
+        data, err = pm.do_io(h, bytes(17), False, 250)
 
 
 def mouse_read():
@@ -98,7 +116,7 @@ def mouse_read():
         try:
             def io(frame):
                 # mouse yang tidur tidak boleh menahan API belasan detik
-                return mouse_io(h, frame, timeout_ms=400, read_ms=700)
+                return mouse_io(h, frame, timeout_ms=400, read_ms=700, match=True)
 
             out = {}
             r = io(bytes([0x08, 0x04] + [0] * 14 + [0x49]))
@@ -211,13 +229,13 @@ def mouse_write(key, value):
         raise RuntimeError("mouse tidak ditemukan / sleep")
     try:
         if key == "polling":
-            r = mouse_io(h, mouse_frame(0x08, 0x0000, b"\x00" * 10))
+            r = mouse_io(h, mouse_frame(0x08, 0x0000, b"\x00" * 10), match=True)
             d = bytearray(r[6:16])
             code = mouse_polling_code(int(value))
             d[0] = code
             d[1] = (0x55 - code) & 0xFF
             mouse_io(h, mouse_frame(0x07, 0x0000, bytes(d)), True)
-            return mouse_io(h, mouse_frame(0x08, 0x0000, b"\x00" * 10))[6]
+            return mouse_io(h, mouse_frame(0x08, 0x0000, b"\x00" * 10), match=True)[6]
         if key in ("lod", "debounce"):
             sel = 0x03 if key == "lod" else 0x02
             v = int(value)
@@ -226,51 +244,51 @@ def mouse_write(key, value):
             return v
         if key == "activeStage":
             n = int(value)
-            r = mouse_io(h, mouse_frame(0x08, 0x0000, b"\x00" * 10))
+            r = mouse_io(h, mouse_frame(0x08, 0x0000, b"\x00" * 10), match=True)
             d = bytearray(r[6:16])
             d[4] = n
             d[5] = (0x55 - n) & 0xFF
             mouse_io(h, mouse_frame(0x07, 0x0000, bytes(d)), True)
             time.sleep(0.2)
-            return mouse_io(h, mouse_frame(0x08, 0x0000, b"\x00" * 10))[6 + 4]
+            return mouse_io(h, mouse_frame(0x08, 0x0000, b"\x00" * 10), match=True)[6 + 4]
         if key == "motionSync":
             v = 1 if value else 0
-            r = mouse_io(h, mouse_frame(0x08, 0x00A9, b"\x00" * 10))
+            r = mouse_io(h, mouse_frame(0x08, 0x00A9, b"\x00" * 10), match=True)
             d = bytearray(r[6:16])
             d[2] = v
             d[3] = (0x55 - v) & 0xFF
             mouse_io(h, mouse_frame(0x07, 0x00A9, bytes(d)), True)
             time.sleep(0.2)
-            return bool(mouse_io(h, mouse_frame(0x08, 0x00A9, b"\x00" * 10))[6 + 2])
+            return bool(mouse_io(h, mouse_frame(0x08, 0x00A9, b"\x00" * 10), match=True)[6 + 2])
         if key == "sleep":
             code = max(0, min(255, int(value) // 10))
-            r = mouse_io(h, mouse_frame(0x08, 0x00B5, b"\x00" * 6))
+            r = mouse_io(h, mouse_frame(0x08, 0x00B5, b"\x00" * 6), match=True)
             d = bytearray(r[6:12])
             d[2] = code
             d[3] = (0x55 - code) & 0xFF
             mouse_io(h, mouse_frame(0x07, 0x00B5, bytes(d)), True)
             time.sleep(0.2)
-            rb = mouse_io(h, mouse_frame(0x08, 0x00B5, b"\x00" * 6))[6 + 2]
+            rb = mouse_io(h, mouse_frame(0x08, 0x00B5, b"\x00" * 6), match=True)[6 + 2]
             return rb * 10
         if key == "angleSnap":
             on = bool(value)
-            r = mouse_io(h, mouse_frame(0x08, 0x00BD, b"\x00" * 4))
+            r = mouse_io(h, mouse_frame(0x08, 0x00BD, b"\x00" * 4), match=True)
             d = bytearray(r[6:10])
             d[2] = 4 if on else 0xFF
             d[3] = ((0x55 - d[2]) & 0xFF) if on else 0xFF
             mouse_io(h, mouse_frame(0x07, 0x00BD, bytes(d)), True)
             time.sleep(0.2)
-            return bool(mouse_io(h, mouse_frame(0x08, 0x00BD, b"\x00" * 4))[6 + 2] != 0xFF)
+            return bool(mouse_io(h, mouse_frame(0x08, 0x00BD, b"\x00" * 4), match=True)[6 + 2] != 0xFF)
         if key == "led":
             on = bool(value)
             mode = 2 if on else 0
-            r = mouse_io(h, mouse_frame(0x08, 0x004C, b"\x00" * 10))
+            r = mouse_io(h, mouse_frame(0x08, 0x004C, b"\x00" * 10), match=True)
             d = bytearray(r[6:16])
             d[0] = mode
             d[1] = (0x55 - mode) & 0xFF
             mouse_io(h, mouse_frame(0x07, 0x004C, bytes(d)), True)
             time.sleep(0.2)
-            return mouse_io(h, mouse_frame(0x08, 0x004C, b"\x00" * 10))[6] != 0
+            return mouse_io(h, mouse_frame(0x08, 0x004C, b"\x00" * 10), match=True)[6] != 0
         if key == "dpiStage":
             idx, dpi = int(value[0]), int(value[1])
             byte = max(0, min(255, dpi // DPI_STEP))
@@ -278,7 +296,7 @@ def mouse_write(key, value):
             mouse_io(h, mouse_frame(0x07, addr,
                                     bytes([byte, byte, 0, (0x55 - 2 * byte) & 0xFF])), True)
             time.sleep(0.2)
-            rb = mouse_io(h, mouse_frame(0x08, addr, b"\x00" * 4))[6]
+            rb = mouse_io(h, mouse_frame(0x08, addr, b"\x00" * 4), match=True)[6]
             return rb * DPI_STEP
         raise RuntimeError("mouse key tidak didukung: " + key)
     finally:
