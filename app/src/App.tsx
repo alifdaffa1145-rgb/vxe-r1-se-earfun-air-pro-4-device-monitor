@@ -1,10 +1,7 @@
 import { useEffect, useReducer, useRef, useState } from 'react'
 import { initialState, reducer, type Action, type MouseState, type TwsState } from './state'
 import { getStatus, setDevice } from './api'
-import Dock from './components/Dock'
-import TopNav from './components/TopNav'
-import Hero from './components/Hero'
-import FilterBar from './components/FilterBar'
+import InstrumentHeader from './components/InstrumentHeader'
 import Cards from './components/Cards'
 import ViewDots from './components/ViewDots'
 
@@ -38,6 +35,7 @@ export default function App() {
     mouse: null,
     tws: null,
   })
+  const [pending, setPending] = useState<Record<string, boolean>>({})
   const timers = useRef<Record<string, number>>({})
 
   useEffect(() => {
@@ -71,6 +69,8 @@ export default function App() {
     const id = `${device}.${key}`
     const patch = (data: Record<string, unknown>) =>
       dispatch({ type: device === 'mouse' ? 'MOUSE' : 'TWS', patch: data as never })
+    const finish = () => setPending(p => { const n = { ...p }; delete n[id]; return n })
+    setPending(p => ({ ...p, [id]: true }))
     window.clearTimeout(timers.current[id])
     timers.current[id] = window.setTimeout(() => {
       void setDevice(device, key, value)
@@ -79,12 +79,14 @@ export default function App() {
           if (rb !== undefined && rb !== null && key !== 'eq' && key !== 'gesture') {
             patch({ [key]: rb })
           }
+          finish()
         })
         .catch(err => {
           const msg = err instanceof Error ? err.message : String(err)
           setErrors(e => ({ ...e, [device]: msg }))
           // kembalikan tampilan ke nilai sebelum diubah pengguna
           if (rollback !== undefined) patch({ [key]: rollback })
+          finish()
         })
     }, 220)
   }
@@ -115,19 +117,26 @@ export default function App() {
   const problem = errors.mouse || errors.tws
 
   return (
-    <div className="ambient">
-      <span className="glow glow-bl" />
-      <span className="glow glow-tr" />
-      <div className="shell">
-        <Dock tab={state.tab} onTab={setTab} />
-        <main className="window">
-          <TopNav tab={state.tab} onTab={setTab} connected={state.connected} />
-          <Hero tab={state.tab} mouse={state.mouse} tws={state.tws} />
-          <FilterBar
+    <div className="app">
+      <div className="app-shell">
+        <nav className="rail">
+          <button className={`rail-btn ${state.tab === 'mouse' ? 'on' : ''}`} title="Mouse" aria-label="Mouse" onClick={() => setTab('mouse')}>
+            <span className="mono" style={{ fontWeight: 600 }}>{state.tab === 'mouse' ? 'M' : 'm'}</span>
+          </button>
+          <button className={`rail-btn ${state.tab === 'tws' ? 'on' : ''}`} title="TWS" aria-label="TWS" onClick={() => setTab('tws')}>
+            <span className="mono" style={{ fontWeight: 600 }}>{state.tab === 'tws' ? 'E' : 'e'}</span>
+          </button>
+        </nav>
+        <main className="work-area">
+          <InstrumentHeader
+            tab={state.tab}
+            mouse={state.mouse}
+            tws={state.tws}
+            connected={state.connected}
             filter={state.filter}
             onFilter={f => dispatch({ type: 'SET_FILTER', filter: f })}
           />
-          <Cards state={state} dispatch={bridgeDispatch} />
+          <Cards state={state} dispatch={bridgeDispatch} pending={pending} />
           {problem && (
             <p className="bridge-status">
               {errors.mouse && `Mouse: ${errors.mouse}. `}

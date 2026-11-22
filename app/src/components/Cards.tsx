@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import type { Action, AppState, Filter, MouseState, TwsState } from '../state'
 import {
   ANC_SUBS,
@@ -10,6 +10,7 @@ import {
   GESTURES,
 } from '../state'
 import { useSpotlight } from '../hooks'
+import Icon, { type IconName } from './Icon'
 
 type Dispatch = (a: Action) => void
 
@@ -43,10 +44,12 @@ function Chips<T extends string | number>({
   options,
   value,
   onChange,
+  disabled = false,
 }: {
   options: { value: T; label: string }[]
   value: T
   onChange: (v: T) => void
+  disabled?: boolean
 }) {
   return (
     <div className="chips">
@@ -54,6 +57,7 @@ function Chips<T extends string | number>({
         <button
           key={String(o.value)}
           className={o.value === value ? 'chip on' : 'chip'}
+          disabled={disabled}
           onClick={() => onChange(o.value)}
         >
           {o.label}
@@ -104,7 +108,7 @@ function Card({
   arche: 'A' | 'B' | 'C' | 'D'
   cat: Filter
   title: string
-  icon: string
+  icon: IconName
   children: ReactNode
   delay?: number
 }) {
@@ -118,7 +122,7 @@ function Card({
     >
       <div className="card-head">
         <span className="card-icon" aria-hidden>
-          {icon}
+          <Icon name={icon} />
         </span>
         <h3>{title}</h3>
       </div>
@@ -131,7 +135,7 @@ function Card({
 
 function MouseBattery({ mouse }: { mouse: MouseState }) {
   return (
-    <Card arche="A" cat="baterai" title="Baterai Mouse" icon="🪫">
+    <Card arche="A" cat="baterai" title="Baterai Mouse" icon="battery">
       <div className="big-metric">
         <span className="big-num">{mouse.battery}</span>
         <sup>%</sup>
@@ -153,7 +157,7 @@ function MouseBattery({ mouse }: { mouse: MouseState }) {
 
 function MousePerf({ mouse, dispatch }: { mouse: MouseState; dispatch: Dispatch }) {
   return (
-    <Card arche="C" cat="performa" title="Performa & Sensor" icon="⚙️">
+    <Card arche="C" cat="performa" title="Performa & Sensor" icon="sensor">
       <Field label="DPI stage">
         <div className="dpi-grid">
           {mouse.dpiStages.map((dpi, i) => (
@@ -254,7 +258,7 @@ function MouseData() {
     ['Konektivitas', '2.4G / BT 5.4 / USB-C'],
   ]
   return (
-    <Card arche="D" cat="performa" title="Spesifikasi & Profil" icon="📄">
+    <Card arche="D" cat="performa" title="Spesifikasi & Profil" icon="data">
       <table className="data-table">
         <tbody>
           {rows.map(([k, v]) => (
@@ -282,7 +286,7 @@ function TwsBattery({ tws }: { tws: TwsState }) {
     { label: 'Case', value: tws.caseBat },
   ]
   return (
-    <Card arche="A" cat="baterai" title="Baterai EarFun" icon="🎧">
+    <Card arche="A" cat="baterai" title="Baterai EarFun" icon="battery">
       <div className="big-metric">
         <span className="big-num">{tws.left ?? 0}</span>
         <sup>%</sup>
@@ -310,7 +314,7 @@ function TwsBattery({ tws }: { tws: TwsState }) {
 
 function TwsAudio({ tws, dispatch }: { tws: TwsState; dispatch: Dispatch }) {
   return (
-    <Card arche="C" cat="audio" title="Mode & Suara" icon="🎚️">
+    <Card arche="C" cat="audio" title="Mode & Suara" icon="sliders">
       <Field label="Noise control">
         <Segmented
           options={[
@@ -398,48 +402,99 @@ function TwsAudio({ tws, dispatch }: { tws: TwsState; dispatch: Dispatch }) {
   )
 }
 
-function TwsConnect({ tws, dispatch }: { tws: TwsState; dispatch: Dispatch }) {
+function TwsConnect({
+  tws,
+  dispatch,
+  pending,
+}: {
+  tws: TwsState
+  dispatch: Dispatch
+  pending: boolean
+}) {
+  const [confirmTarget, setConfirmTarget] = useState<number | null>(null)
+
+  useEffect(() => {
+    if (confirmTarget === null) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setConfirmTarget(null)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [confirmTarget])
+
+  const targetLabel =
+    confirmTarget === null
+      ? ''
+      : CODECS.find(c => c.value === confirmTarget)?.label ?? String(confirmTarget)
+
   return (
-    <Card arche="C" cat="koneksi" title="Konektivitas" icon="🔗">
-      <Field label="Codec audio">
-        <Chips
-          options={CODECS.map(c => ({ value: c.value, label: c.label }))}
-          value={tws.codec}
-          onChange={v => {
-            if (v === tws.codec) return
-            const label = CODECS.find(c => c.value === v)?.label ?? String(v)
-            if (!window.confirm(
-              `Ganti codec ke ${label}? Earbud akan restart ±20 detik dan koneksi SPP putus sementara.`,
-            )) return
-            dispatch({ type: 'TWS', patch: { codec: v } })
-          }}
-        />
-        <small className="hint">
-          Mengubah codec memicu reboot ±20 detik. LDAC tidak bisa dipakai bersama multipoint.
-        </small>
-      </Field>
-      <div className="tog-row">
-        <Toggle
-          label="Multipoint"
-          checked={tws.multipoint}
-          onChange={() => {}}
-          disabled
-        />
-        <small className="hint">Belum bisa diubah dari PC; tidak bisa dipakai bersama LDAC.</small>
-      </div>
-      <Field label="Perangkat terpasang">
-        <div className="host-list">
-          <span>PC ini · terhubung</span>
-          <span>Telepon · tersimpan</span>
+    <>
+      <Card arche="C" cat="koneksi" title="Konektivitas" icon="link">
+        <Field label="Codec audio">
+          <Chips
+            options={CODECS.map(c => ({ value: c.value, label: c.label }))}
+            value={tws.codec}
+            disabled={pending}
+            onChange={v => {
+              if (v !== tws.codec) setConfirmTarget(v)
+            }}
+          />
+          <small className="hint">
+            LDAC tidak bisa dipakai bersama multipoint. Perubahan memicu restart ±20 detik.
+          </small>
+          {pending && <span className="card-state">Menerapkan ke earbud…</span>}
+        </Field>
+        <div className="tog-row">
+          <Toggle label="Multipoint" checked={tws.multipoint} onChange={() => {}} disabled />
+          <small className="hint">Belum bisa diubah dari PC.</small>
         </div>
-      </Field>
-    </Card>
+        <Field label="Perangkat terpasang">
+          <div className="host-list">
+            <span>PC ini · terhubung</span>
+            <span>Telepon · tersimpan</span>
+          </div>
+        </Field>
+      </Card>
+
+      {confirmTarget !== null && (
+        <div className="modal-backdrop" onClick={() => setConfirmTarget(null)}>
+          <div
+            className="modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="codec-dialog-title"
+            onClick={e => e.stopPropagation()}
+          >
+            <span className="modal-eyebrow">Perubahan perangkat</span>
+            <h2 id="codec-dialog-title">Ganti codec ke {targetLabel}?</h2>
+            <p>
+              Earbud akan restart sekitar 20 detik dan koneksi SPP putus sementara.
+              Pengaturan lain tetap tersimpan.
+            </p>
+            <div className="modal-actions">
+              <button className="btn ghost" onClick={() => setConfirmTarget(null)}>
+                Batal
+              </button>
+              <button
+                className="btn primary"
+                onClick={() => {
+                  dispatch({ type: 'TWS', patch: { codec: confirmTarget } })
+                  setConfirmTarget(null)
+                }}
+              >
+                Ganti codec
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   )
 }
 
 function TwsGesture({ tws, dispatch }: { tws: TwsState; dispatch: Dispatch }) {
   return (
-    <Card arche="D" cat="audio" title="Matriks Gestur" icon="👆">
+    <Card arche="D" cat="audio" title="Matriks Gestur" icon="gesture">
       <div className="gesture-grid">
         {GESTURES.map((g, i) => (
           <div className="gesture-cell" key={`${g.type}-${g.side}`}>
@@ -472,7 +527,7 @@ function TwsGesture({ tws, dispatch }: { tws: TwsState; dispatch: Dispatch }) {
 
 function TwsEq({ tws, dispatch }: { tws: TwsState; dispatch: Dispatch }) {
   return (
-    <Card arche="C" cat="audio" title="Equalizer 10 Band" icon="🎛️">
+    <Card arche="C" cat="audio" title="Equalizer 10 Band" icon="equalizer">
       <div className="eq-presets">
         {Object.keys(EQ_PRESETS).map(name => (
           <button
@@ -509,9 +564,11 @@ function TwsEq({ tws, dispatch }: { tws: TwsState; dispatch: Dispatch }) {
 export default function Cards({
   state,
   dispatch,
+  pending,
 }: {
   state: AppState
   dispatch: Dispatch
+  pending: Record<string, boolean>
 }) {
   const { tab, filter, mouse, tws } = state
   const visible = (cat: Filter) => filter === 'semua' || filter === cat
@@ -530,7 +587,9 @@ export default function Cards({
       {visible('audio') && <TwsAudio tws={tws} dispatch={dispatch} />}
       {visible('audio') && <TwsEq tws={tws} dispatch={dispatch} />}
       {visible('audio') && <TwsGesture tws={tws} dispatch={dispatch} />}
-      {visible('koneksi') && <TwsConnect tws={tws} dispatch={dispatch} />}
+      {visible('koneksi') && (
+        <TwsConnect tws={tws} dispatch={dispatch} pending={!!pending['tws.codec']} />
+      )}
     </>
   )
 
