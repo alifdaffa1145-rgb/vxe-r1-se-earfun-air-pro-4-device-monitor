@@ -4,6 +4,7 @@ import { getStatus, setDevice } from './api'
 import InstrumentHeader from './components/InstrumentHeader'
 import Cards from './components/Cards'
 import ViewDots from './components/ViewDots'
+import ToastHost, { useToasts } from './components/Toast'
 
 const MOUSE_WRITABLE = [
   'polling',
@@ -36,6 +37,7 @@ export default function App() {
     tws: null,
   })
   const [pending, setPending] = useState<Record<string, boolean>>({})
+  const { toasts, push, update } = useToasts()
   const timers = useRef<Record<string, number>>({})
 
   useEffect(() => {
@@ -65,12 +67,25 @@ export default function App() {
     }
   }, [])
 
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null
+      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA')) return
+      if (e.key === '1') dispatch({ type: 'SET_TAB', tab: 'mouse' })
+      if (e.key === '2') dispatch({ type: 'SET_TAB', tab: 'tws' })
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
+
   const send = (device: 'mouse' | 'tws', key: string, value: unknown, rollback?: unknown) => {
     const id = `${device}.${key}`
     const patch = (data: Record<string, unknown>) =>
       dispatch({ type: device === 'mouse' ? 'MOUSE' : 'TWS', patch: data as never })
     const finish = () => setPending(p => { const n = { ...p }; delete n[id]; return n })
+    const label = device === 'mouse' ? 'Mouse' : 'TWS'
     setPending(p => ({ ...p, [id]: true }))
+    const toastId = push(`${label} · ${key} dikirim…`, 'pending')
     window.clearTimeout(timers.current[id])
     timers.current[id] = window.setTimeout(() => {
       void setDevice(device, key, value)
@@ -79,11 +94,13 @@ export default function App() {
           if (rb !== undefined && rb !== null && key !== 'eq' && key !== 'gesture') {
             patch({ [key]: rb })
           }
+          update(toastId, `${label} · ${key} tersimpan`, 'success')
           finish()
         })
         .catch(err => {
           const msg = err instanceof Error ? err.message : String(err)
           setErrors(e => ({ ...e, [device]: msg }))
+          update(toastId, `${label} · ${key} gagal`, 'danger')
           // kembalikan tampilan ke nilai sebelum diubah pengguna
           if (rollback !== undefined) patch({ [key]: rollback })
           finish()
@@ -146,6 +163,7 @@ export default function App() {
         </main>
       </div>
       <ViewDots tab={state.tab} onTab={setTab} />
+      <ToastHost toasts={toasts} />
     </div>
   )
 }

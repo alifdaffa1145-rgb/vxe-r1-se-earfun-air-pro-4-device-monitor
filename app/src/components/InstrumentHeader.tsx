@@ -1,4 +1,6 @@
 import type { Filter, MouseState, Tab, TwsState } from '../state'
+import { useCountUp } from '../hooks'
+import Ring from './Ring'
 
 interface InstrumentHeaderProps {
   tab: Tab
@@ -37,6 +39,8 @@ export default function InstrumentHeader({
       ? mouse.battery
       : Math.round((((tws.left ?? 0) + (tws.right ?? 0)) / 2) || 0)
 
+  const shownBattery = useCountUp(avgBattery, 700)
+
   return (
     <div className="instrument-header">
       <div className="device-header">
@@ -58,10 +62,11 @@ export default function InstrumentHeader({
       </div>
 
       <div className="status-summary">
+        <Ring value={avgBattery} label="Baterai" />
         <div className="stat">
           <span className="stat-label">Baterai</span>
           <span className={`stat-value ${tab === 'mouse' ? 'accent' : 'success'}`}>
-            {avgBattery}%
+            {shownBattery}%
           </span>
         </div>
         {tab === 'mouse' && (

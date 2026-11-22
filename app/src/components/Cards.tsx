@@ -9,7 +9,7 @@ import {
   GESTURE_ACTIONS,
   GESTURES,
 } from '../state'
-import { useSpotlight } from '../hooks'
+import { useSpotlight, useCountUp } from '../hooks'
 import Icon, { type IconName } from './Icon'
 
 type Dispatch = (a: Action) => void
@@ -118,7 +118,7 @@ function Card({
       ref={ref}
       className={`bento arche-${arche}`}
       data-cat={cat}
-      style={{ animationDelay: `${delay}ms` }}
+      style={delay ? { animationDelay: `${delay}ms` } : undefined}
     >
       <div className="card-head">
         <span className="card-icon" aria-hidden>
@@ -134,10 +134,11 @@ function Card({
 /* ---------- Mouse ---------- */
 
 function MouseBattery({ mouse }: { mouse: MouseState }) {
+  const shown = useCountUp(mouse.battery, 700)
   return (
     <Card arche="A" cat="baterai" title="Baterai Mouse" icon="battery">
       <div className="big-metric">
-        <span className="big-num">{mouse.battery}</span>
+        <span className="big-num">{shown}</span>
         <sup>%</sup>
         <span className={mouse.charging ? 'badge on' : 'badge'}>
           {mouse.charging ? 'Mengisi daya' : 'Tidak mengisi'}
@@ -280,6 +281,8 @@ function MouseData() {
 /* ---------- TWS ---------- */
 
 function TwsBattery({ tws }: { tws: TwsState }) {
+  const shownL = useCountUp(tws.left ?? 0, 700)
+  const shownR = useCountUp(tws.right ?? 0, 700)
   const rows: { label: string; value: number | null }[] = [
     { label: 'Kiri', value: tws.left },
     { label: 'Kanan', value: tws.right },
@@ -288,10 +291,10 @@ function TwsBattery({ tws }: { tws: TwsState }) {
   return (
     <Card arche="A" cat="baterai" title="Baterai EarFun" icon="battery">
       <div className="big-metric">
-        <span className="big-num">{tws.left ?? 0}</span>
+        <span className="big-num">{shownL}</span>
         <sup>%</sup>
         <span className="badge">kiri</span>
-        <span className="big-num alt">{tws.right ?? 0}</span>
+        <span className="big-num alt">{shownR}</span>
         <sup>%</sup>
         <span className="badge">kanan</span>
       </div>
@@ -593,5 +596,5 @@ export default function Cards({
     </>
   )
 
-  return <div className="bento-grid">{tab === 'mouse' ? mouseCards : twsCards}</div>
+  return <div className="bento-grid" key={tab}>{tab === 'mouse' ? mouseCards : twsCards}</div>
 }

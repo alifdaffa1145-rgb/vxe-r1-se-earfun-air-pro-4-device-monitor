@@ -56,7 +56,9 @@
   /* ---------- Motion ---------- */
   --duration-fast: 140ms;
   --duration-normal: 200ms;
+  --duration-slow: 460ms;
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 
   /* ---------- Layout ---------- */
   --rail-width: 56px;
@@ -1103,6 +1105,310 @@ a {
 }
 
 /* ---------- Reduced motion ---------- */
+/* ============================================================
+   Interaksi & animasi — konsol hidup, bukan statis
+   ============================================================ */
+
+/* Grid masuk tiap kali pindah perangkat / filter */
+.bento-grid {
+  animation: grid-in 380ms var(--ease-standard) both;
+}
+@keyframes grid-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* Kartu masuk bergiliran — memakai animationDelay dari Cards.tsx */
+.bento {
+  animation: card-in 460ms var(--ease-spring) both;
+}
+@keyframes card-in {
+  from { opacity: 0; transform: translateY(16px) scale(0.985); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* Cursor spotlight mengikuti pointer (variabel dari useSpotlight) */
+.bento::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    300px circle at var(--mx, 50%) var(--my, 50%),
+    rgba(242, 169, 59, 0.14),
+    transparent 68%
+  );
+  opacity: 0;
+  transition: opacity var(--duration-normal) var(--ease-standard);
+}
+.bento:hover::before { opacity: 1; }
+.bento > * { position: relative; z-index: 1; }
+
+/* Hover kartu: angkat + pinggiran amber + cahaya halus */
+.bento:hover {
+  border-color: var(--color-accent);
+  transform: translateY(-3px);
+  box-shadow:
+    0 14px 34px -14px rgba(242, 169, 59, 0.3),
+    0 0 0 1px rgba(242, 169, 59, 0.1);
+}
+
+/* Ikon kartu ikut bernyawa saat hover */
+.bento:hover .card-icon {
+  background: var(--color-accent);
+  color: var(--color-text-inverse);
+  transform: rotate(-6deg) scale(1.06);
+}
+.card-icon {
+  transition:
+    background-color var(--duration-normal) var(--ease-standard),
+    color var(--duration-normal) var(--ease-standard),
+    transform var(--duration-normal) var(--ease-spring);
+}
+
+/* Status hubung: cincin denyut */
+.status-indicator { position: relative; }
+.status-indicator.online::after,
+.status-indicator.pending::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 1px solid currentColor;
+  color: inherit;
+  animation: ring-out 2.2s var(--ease-standard) infinite;
+}
+.status-indicator.online::after { color: var(--color-success); }
+.status-indicator.pending::after { color: var(--color-accent); }
+@keyframes ring-out {
+  0%   { transform: scale(0.7); opacity: 0.9; }
+  100% { transform: scale(1.9); opacity: 0; }
+}
+
+/* Rail: penanda aktif meluncur */
+.rail-btn.on::after {
+  content: '';
+  position: absolute;
+  left: -8px;
+  top: 50%;
+  width: 3px;
+  height: 20px;
+  border-radius: var(--radius-pill);
+  background: var(--color-accent);
+  transform: translateY(-50%);
+  box-shadow: 0 0 10px rgba(242, 169, 59, 0.6);
+  animation: marker-in 260ms var(--ease-spring) both;
+}
+@keyframes marker-in {
+  from { transform: translateY(-50%) scaleY(0.2); opacity: 0; }
+  to   { transform: translateY(-50%) scaleY(1); opacity: 1; }
+}
+
+/* Toggle: kenop memantul (spring) */
+.sw::after { transition: transform 280ms var(--ease-spring), background-color 140ms ease; }
+.tog.on .sw::after { background: var(--color-text-inverse); }
+.tog:active .sw::after { width: 17px; }
+
+/* Pill filter aktif: garis bawah meluncur */
+.filter-pill { position: relative; overflow: hidden; }
+.filter-pill.on { box-shadow: 0 0 18px -6px rgba(242, 169, 59, 0.55); }
+.filter-pill.on::after {
+  content: '';
+  position: absolute;
+  left: 20%;
+  right: 20%;
+  bottom: 3px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--color-text-inverse);
+  opacity: 0.5;
+}
+
+/* Ripple tekan pada kontrol */
+.chip, .seg-btn, .filter-pill {
+  position: relative;
+  isolation: isolate;
+}
+.chip::after, .seg-btn::after, .filter-pill::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: currentColor;
+  opacity: 0;
+  transform: scale(0);
+  transition: transform 380ms var(--ease-standard), opacity 380ms ease;
+  pointer-events: none;
+}
+.chip:active::after, .seg-btn:active::after, .filter-pill:active::after {
+  transform: scale(1.5);
+  opacity: 0.12;
+}
+
+/* Metric besar (belum terdefinisi sebelumnya) */
+.big-metric {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: var(--space-2) 0;
+}
+.big-num {
+  font-family: var(--font-mono);
+  font-size: 38px;
+  line-height: 1;
+  font-weight: 650;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text);
+}
+.big-num.alt { color: var(--color-accent); }
+.big-metric sup { font-size: 14px; color: var(--color-text-secondary); }
+
+/* Status sementara pada kartu */
+.card-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 4px 9px;
+  border-radius: var(--radius-pill);
+  background: var(--color-accent-muted);
+  color: var(--color-accent);
+  font-size: var(--text-xs);
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+/* Meter pengisian saat nilai berubah */
+.bar span { position: relative; }
+.bar span::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+  transform: translateX(-100%);
+  animation: sheen 2.8s var(--ease-standard) infinite;
+}
+@keyframes sheen {
+  0%, 55% { transform: translateX(-100%); }
+  100%    { transform: translateX(100%); }
+}
+
+/* Cincin baterai di header */
+.ring { position: relative; width: 84px; height: 84px; flex: 0 0 auto; }
+.ring svg { display: block; }
+.ring-seg { stroke: rgba(231, 236, 242, 0.1); transition: stroke 220ms ease; }
+.ring-seg.on { stroke: var(--color-accent); filter: drop-shadow(0 0 3px rgba(242, 169, 59, 0.5)); }
+.ring-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.ring-value { font-size: 19px; font-weight: 650; color: var(--color-text); }
+.ring-unit { font-size: 10px; color: var(--color-text-secondary); }
+.ring-label {
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-muted);
+}
+
+/* Dialog konfirmasi codec */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: var(--space-4);
+  background: rgba(8, 11, 15, 0.72);
+  backdrop-filter: blur(6px);
+  animation: backdrop-in 200ms ease both;
+}
+@keyframes backdrop-in { from { opacity: 0; } to { opacity: 1; } }
+
+.modal {
+  width: min(420px, 100%);
+  padding: var(--space-5);
+  border-radius: var(--radius-lg);
+  background: var(--color-panel);
+  border: 1px solid var(--color-border-hover);
+  box-shadow: 0 24px 64px -16px rgba(0, 0, 0, 0.7);
+  animation: modal-in 320ms var(--ease-spring) both;
+}
+@keyframes modal-in {
+  from { opacity: 0; transform: translateY(14px) scale(0.96); }
+  to   { opacity: 1; transform: none; }
+}
+.modal-eyebrow {
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-accent);
+}
+.modal h2 { margin: 10px 0 8px; font-size: var(--text-xl); }
+.modal p { margin: 0; color: var(--color-text-secondary); line-height: 1.6; }
+.modal-actions { display: flex; justify-content: flex-end; gap: var(--space-2); margin-top: var(--space-5); }
+.btn { padding: 9px 16px; border-radius: var(--radius-md); font-size: var(--text-sm); transition: all 160ms var(--ease-standard); }
+.btn.ghost { border: 1px solid var(--color-border); color: var(--color-text-secondary); }
+.btn.ghost:hover { border-color: var(--color-border-hover); color: var(--color-text); }
+.btn.primary { border: 1px solid var(--color-accent); background: var(--color-accent); color: var(--color-text-inverse); font-weight: 600; }
+.btn.primary:hover { background: var(--color-accent-hover); transform: translateY(-1px); }
+
+/* Toast: keluar + progress */
+.toast { position: relative; overflow: hidden; }
+.toast-mark {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--color-accent-muted);
+  color: var(--color-accent);
+  font-size: 11px;
+  font-weight: 700;
+}
+.toast.success .toast-mark { background: var(--color-success-muted); color: var(--color-success); }
+.toast.danger .toast-mark { background: var(--color-danger-muted); color: var(--color-danger); }
+.toast::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 2px;
+  width: 100%;
+  background: var(--color-accent);
+  opacity: 0.45;
+  transform-origin: left;
+  animation: toast-progress 3.2s linear forwards;
+}
+.toast.success::after { background: var(--color-success); }
+.toast.danger::after { background: var(--color-danger); }
+@keyframes toast-progress { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+.toast.leaving { animation: toast-out 220ms var(--ease-standard) both; }
+@keyframes toast-out { to { opacity: 0; transform: translateX(16px); } }
+
+/* Kartu masuk bergiliran tanpa perlu delay inline */
+.bento:nth-child(1) { animation-delay: 30ms; }
+.bento:nth-child(2) { animation-delay: 90ms; }
+.bento:nth-child(3) { animation-delay: 150ms; }
+.bento:nth-child(4) { animation-delay: 210ms; }
+.bento:nth-child(5) { animation-delay: 270ms; }
+
+/* Angka telemetri selalu rapi saat berubah */
+.stat-value, .bar-val, .eq-val { font-variant-numeric: tabular-nums; }
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -1111,8 +1417,10 @@ a {
     animation-iteration-count: 1 !important;
     transition-duration: 1ms !important;
   }
-  .badge.pending {
-    animation: none;
-    opacity: 1;
-  }
+  .badge.pending,
+  .card-state { animation: none; opacity: 1; }
+  .bento::before { display: none; }
+  .bar span::after,
+  .status-indicator.online::after,
+  .status-indicator.pending::after { display: none; }
 }
