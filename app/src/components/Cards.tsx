@@ -67,13 +67,15 @@ function Toggle({
   checked,
   onChange,
   label,
+  disabled = false,
 }: {
   checked: boolean
   onChange: (v: boolean) => void
   label: string
+  disabled?: boolean
 }) {
   return (
-    <button className={checked ? 'tog on' : 'tog'} onClick={() => onChange(!checked)}>
+    <button className={checked ? 'tog on' : 'tog'} disabled={disabled} onClick={() => onChange(!checked)}>
       <span className="sw" />
       <span>{label}</span>
     </button>
@@ -403,16 +405,27 @@ function TwsConnect({ tws, dispatch }: { tws: TwsState; dispatch: Dispatch }) {
         <Chips
           options={CODECS.map(c => ({ value: c.value, label: c.label }))}
           value={tws.codec}
-          onChange={v => dispatch({ type: 'TWS', patch: { codec: v } })}
+          onChange={v => {
+            if (v === tws.codec) return
+            const label = CODECS.find(c => c.value === v)?.label ?? String(v)
+            if (!window.confirm(
+              `Ganti codec ke ${label}? Earbud akan restart ±20 detik dan koneksi SPP putus sementara.`,
+            )) return
+            dispatch({ type: 'TWS', patch: { codec: v } })
+          }}
         />
-        <small className="hint">Mengubah codec memicu reboot ±20 detik</small>
+        <small className="hint">
+          Mengubah codec memicu reboot ±20 detik. LDAC tidak bisa dipakai bersama multipoint.
+        </small>
       </Field>
       <div className="tog-row">
         <Toggle
           label="Multipoint"
           checked={tws.multipoint}
-          onChange={v => dispatch({ type: 'TWS', patch: { multipoint: v } })}
+          onChange={() => {}}
+          disabled
         />
+        <small className="hint">Belum bisa diubah dari PC; tidak bisa dipakai bersama LDAC.</small>
       </div>
       <Field label="Perangkat terpasang">
         <div className="host-list">

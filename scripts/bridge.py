@@ -325,7 +325,10 @@ TWS_QUERY = {
     "mic": 0x0331,
     "prompt": 0x0339,
     "findDevice": 0x0333,
+    "codec": 0x032F,
 }
+
+CODEC_VALUES = {0, 1, 3, 8, 19}  # Stable, aptX, aptX Adaptive, LDAC, Lossless
 
 GESTURE_TYPES = [1, 1, 2, 2, 3, 3, 17, 17]
 
@@ -362,7 +365,49 @@ def tws_write_eq(values):
         pe.k32.CloseHandle(h)
 
 
+def tws_wait_codec(target, limit=45):
+    """Tunggu SPP kembali dan codec terbaca sesuai setelah perubahan.
+
+    Perangkat memutus SPP saat codec diganti (teramati: write 0x032E
+    langsung memutus, tanpa ACK). Buka ulang COM3 dengan retry karena
+    polling bridge sesekali memegang handle yang sama.
+    """
+    deadline = time.monotonic() + limit
+    last = None
+    while time.monotonic() < deadline:
+        try:
+            h = tws_open()
+            try:
+                last = tws_query(h, 0x032F)
+                if last == target:
+                    return last
+            finally:
+                pe.k32.CloseHandle(h)
+        except Exception as exc:
+            last = str(exc)
+        time.sleep(1.0)
+    raise RuntimeError("codec tidak terkonfirmasi (terakhir: %r, harap %d)" % (
+        last, target))
+
+
+def tws_write_codec(value):
+    v = int(value)
+    if v not in CODEC_VALUES:
+        raise RuntimeError("codec tidak didukung: %r" % value)
+    h = tws_open()
+    try:
+        frames, err = pe.exchange(h, 0x032E, bytes([v]), 1.6)
+        if err:
+            raise RuntimeError(err)
+        # ACK bisa kosong: earbud langsung memutus SPP setelah menerima perintah.
+    finally:
+        pe.k32.CloseHandle(h)
+    return tws_wait_codec(v)
+
+
 def tws_write(key, value):
+    if key == "codec":
+        return tws_write_codec(value)
     if key == "eq":
         return tws_write_eq(value)
     if key == "gesture":

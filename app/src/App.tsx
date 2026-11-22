@@ -29,6 +29,7 @@ const TWS_WRITABLE = [
   'mic',
   'prompt',
   'findDevice',
+  'codec',
 ]
 
 export default function App() {
